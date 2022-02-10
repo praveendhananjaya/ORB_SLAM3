@@ -23,11 +23,13 @@
 #include<vector>
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#include <future>
 #include"sophus/sim3.hpp"
 
 #include"MapPoint.h"
 #include"KeyFrame.h"
 #include"Frame.h"
+#include <semaphore.h>
 
 
 namespace ORB_SLAM3
@@ -45,6 +47,12 @@ namespace ORB_SLAM3
         // Search matches between Frame keypoints and projected MapPoints. Returns number of matches
         // Used to track the local map (Tracking)
         int SearchByProjection(Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3, const bool bFarPoints = false, const float thFarPoints = 50.0f);
+
+        //int SearchByProjectionParallel(Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3, const bool bFarPoints = false, const float thFarPoints = 50.0f);
+
+        //void Dowork2(std::promise<int> *promObj, Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3, const bool bFarPoints = false, const float thFarPoints = 50.0f);
+
+        //void Dowork(size_t iMP,std::promise<int> *promObj, Frame &F, const std::vector<MapPoint*> &vpMapPoints, const float th=3, const bool bFarPoints = false, const float thFarPoints = 50.0f);
 
         // Project MapPoints tracked in last frame into the current frame and search matches.
         // Used to track from previous frame (Tracking)
@@ -86,6 +94,11 @@ namespace ORB_SLAM3
         // Project MapPoints into KeyFrame using a given Sim3 and search for duplicated MapPoints.
         int Fuse(KeyFrame* pKF, Sophus::Sim3f &Scw, const std::vector<MapPoint*> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint);
 
+
+        static float RadiusByViewingCos(const float &viewCos);
+
+
+
     public:
 
         static const int TH_LOW;
@@ -94,12 +107,14 @@ namespace ORB_SLAM3
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     protected:
-        float RadiusByViewingCos(const float &viewCos);
 
         void ComputeThreeMaxima(std::vector<int>* histo, const int L, int &ind1, int &ind2, int &ind3);
 
         float mfNNratio;
         bool mbCheckOrientation;
+
+        sem_t semaphore_search ;
+
     };
 
 }// namespace ORB_SLAM

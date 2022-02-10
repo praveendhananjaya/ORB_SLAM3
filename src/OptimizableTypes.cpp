@@ -17,9 +17,13 @@
 */
 
 #include "OptimizableTypes.h"
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3 {
+    PROFILE_FUNCTION();
     bool EdgeSE3ProjectXYZOnlyPose::read(std::istream& is){
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             is >> _measurement[i];
         }
@@ -33,7 +37,7 @@ namespace ORB_SLAM3 {
     }
 
     bool EdgeSE3ProjectXYZOnlyPose::write(std::ostream& os) const {
-
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             os << measurement()[i] << " ";
         }
@@ -47,6 +51,7 @@ namespace ORB_SLAM3 {
 
 
     void EdgeSE3ProjectXYZOnlyPose::linearizeOplus() {
+        PROFILE_FUNCTION();
         g2o::VertexSE3Expmap * vi = static_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
         Eigen::Vector3d xyz_trans = vi->estimate().map(Xw);
 
@@ -63,6 +68,7 @@ namespace ORB_SLAM3 {
     }
 
     bool EdgeSE3ProjectXYZOnlyPoseToBody::read(std::istream& is){
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             is >> _measurement[i];
         }
@@ -76,7 +82,7 @@ namespace ORB_SLAM3 {
     }
 
     bool EdgeSE3ProjectXYZOnlyPoseToBody::write(std::ostream& os) const {
-
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             os << measurement()[i] << " ";
         }
@@ -89,6 +95,7 @@ namespace ORB_SLAM3 {
     }
 
     void EdgeSE3ProjectXYZOnlyPoseToBody::linearizeOplus() {
+        PROFILE_FUNCTION();
         g2o::VertexSE3Expmap * vi = static_cast<g2o::VertexSE3Expmap *>(_vertices[0]);
         g2o::SE3Quat T_lw(vi->estimate());
         Eigen::Vector3d X_l = T_lw.map(Xw);
@@ -137,6 +144,7 @@ namespace ORB_SLAM3 {
 
 
     void EdgeSE3ProjectXYZ::linearizeOplus() {
+        PROFILE_FUNCTION();
         g2o::VertexSE3Expmap * vj = static_cast<g2o::VertexSE3Expmap *>(_vertices[1]);
         g2o::SE3Quat T(vj->estimate());
         g2o::VertexSBAPointXYZ* vi = static_cast<g2o::VertexSBAPointXYZ*>(_vertices[0]);
@@ -163,6 +171,7 @@ namespace ORB_SLAM3 {
     }
 
     bool EdgeSE3ProjectXYZToBody::read(std::istream& is){
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             is >> _measurement[i];
         }
@@ -190,6 +199,7 @@ namespace ORB_SLAM3 {
 
 
     void EdgeSE3ProjectXYZToBody::linearizeOplus() {
+        PROFILE_FUNCTION();
         g2o::VertexSE3Expmap * vj = static_cast<g2o::VertexSE3Expmap *>(_vertices[1]);
         g2o::SE3Quat T_lw(vj->estimate());
         g2o::SE3Quat T_rw = mTrl * T_lw;
@@ -221,6 +231,7 @@ namespace ORB_SLAM3 {
 
     bool VertexSim3Expmap::read(std::istream& is)
     {
+        PROFILE_FUNCTION();
         g2o::Vector7d cam2world;
         for (int i=0; i<6; i++){
             is >> cam2world[i];
@@ -244,6 +255,7 @@ namespace ORB_SLAM3 {
 
     bool VertexSim3Expmap::write(std::ostream& os) const
     {
+        PROFILE_FUNCTION();
         g2o::Sim3 cam2world(estimate().inverse());
         g2o::Vector7d lv=cam2world.log();
         for (int i=0; i<7; i++){
@@ -268,6 +280,7 @@ namespace ORB_SLAM3 {
 
     bool EdgeSim3ProjectXYZ::read(std::istream& is)
     {
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++)
         {
             is >> _measurement[i];
@@ -284,6 +297,7 @@ namespace ORB_SLAM3 {
 
     bool EdgeSim3ProjectXYZ::write(std::ostream& os) const
     {
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             os  << _measurement[i] << " ";
         }
@@ -302,6 +316,7 @@ namespace ORB_SLAM3 {
 
     bool EdgeInverseSim3ProjectXYZ::read(std::istream& is)
     {
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++)
         {
             is >> _measurement[i];
@@ -318,6 +333,7 @@ namespace ORB_SLAM3 {
 
     bool EdgeInverseSim3ProjectXYZ::write(std::ostream& os) const
     {
+        PROFILE_FUNCTION();
         for (int i=0; i<2; i++){
             os  << _measurement[i] << " ";
         }

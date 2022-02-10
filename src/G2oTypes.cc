@@ -19,11 +19,15 @@
 #include "G2oTypes.h"
 #include "ImuTypes.h"
 #include "Converter.h"
+#include "prof.h"
+#include "profTime.h"
+
 namespace ORB_SLAM3
 {
 
 ImuCamPose::ImuCamPose(KeyFrame *pKF):its(0)
 {
+    PROFILE_FUNCTION();
     // Load IMU pose
     twb = pKF->GetImuPosition().cast<double>();
     Rwb = pKF->GetImuRotation().cast<double>();
@@ -72,6 +76,7 @@ ImuCamPose::ImuCamPose(KeyFrame *pKF):its(0)
 
 ImuCamPose::ImuCamPose(Frame *pF):its(0)
 {
+    PROFILE_FUNCTION();
     // Load IMU pose
     twb = pF->GetImuPosition().cast<double>();
     Rwb = pF->GetImuRotation().cast<double>();
@@ -120,6 +125,7 @@ ImuCamPose::ImuCamPose(Frame *pF):its(0)
 
 ImuCamPose::ImuCamPose(Eigen::Matrix3d &_Rwc, Eigen::Vector3d &_twc, KeyFrame* pKF): its(0)
 {
+    PROFILE_FUNCTION();
     // This is only for posegrpah, we do not care about multicamera
     tcw.resize(1);
     Rcw.resize(1);
@@ -148,6 +154,7 @@ ImuCamPose::ImuCamPose(Eigen::Matrix3d &_Rwc, Eigen::Vector3d &_twc, KeyFrame* p
 void ImuCamPose::SetParam(const std::vector<Eigen::Matrix3d> &_Rcw, const std::vector<Eigen::Vector3d> &_tcw, const std::vector<Eigen::Matrix3d> &_Rbc,
               const std::vector<Eigen::Vector3d> &_tbc, const double &_bf)
 {
+    PROFILE_FUNCTION();
     Rbc = _Rbc;
     tbc = _tbc;
     Rcw = _Rcw;
@@ -169,6 +176,7 @@ void ImuCamPose::SetParam(const std::vector<Eigen::Matrix3d> &_Rcw, const std::v
 
 Eigen::Vector2d ImuCamPose::Project(const Eigen::Vector3d &Xw, int cam_idx) const
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d Xc = Rcw[cam_idx] * Xw + tcw[cam_idx];
 
     return pCamera[cam_idx]->project(Xc);
@@ -176,6 +184,7 @@ Eigen::Vector2d ImuCamPose::Project(const Eigen::Vector3d &Xw, int cam_idx) cons
 
 Eigen::Vector3d ImuCamPose::ProjectStereo(const Eigen::Vector3d &Xw, int cam_idx) const
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d Pc = Rcw[cam_idx] * Xw + tcw[cam_idx];
     Eigen::Vector3d pc;
     double invZ = 1/Pc(2);
@@ -186,11 +195,13 @@ Eigen::Vector3d ImuCamPose::ProjectStereo(const Eigen::Vector3d &Xw, int cam_idx
 
 bool ImuCamPose::isDepthPositive(const Eigen::Vector3d &Xw, int cam_idx) const
 {
+    PROFILE_FUNCTION();
     return (Rcw[cam_idx].row(2) * Xw + tcw[cam_idx](2)) > 0.0;
 }
 
 void ImuCamPose::Update(const double *pu)
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d ur, ut;
     ur << pu[0], pu[1], pu[2];
     ut << pu[3], pu[4], pu[5];
@@ -221,6 +232,7 @@ void ImuCamPose::Update(const double *pu)
 
 void ImuCamPose::UpdateW(const double *pu)
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d ur, ut;
     ur << pu[0], pu[1], pu[2];
     ut << pu[3], pu[4], pu[5];
@@ -268,6 +280,7 @@ void InvDepthPoint::Update(const double *pu)
 
 bool VertexPose::read(std::istream& is)
 {
+    PROFILE_FUNCTION();
     std::vector<Eigen::Matrix<double,3,3> > Rcw;
     std::vector<Eigen::Matrix<double,3,1> > tcw;
     std::vector<Eigen::Matrix<double,3,3> > Rbc;
@@ -309,6 +322,7 @@ bool VertexPose::read(std::istream& is)
 
 bool VertexPose::write(std::ostream& os) const
 {
+    PROFILE_FUNCTION();
     std::vector<Eigen::Matrix<double,3,3> > Rcw = _estimate.Rcw;
     std::vector<Eigen::Matrix<double,3,1> > tcw = _estimate.tcw;
 
@@ -348,6 +362,7 @@ bool VertexPose::write(std::ostream& os) const
 
 void EdgeMono::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
     const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
 
@@ -374,6 +389,7 @@ void EdgeMono::linearizeOplus()
 
 void EdgeMonoOnlyPose::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
@@ -396,6 +412,7 @@ void EdgeMonoOnlyPose::linearizeOplus()
 
 void EdgeStereo::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
     const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
 
@@ -428,6 +445,7 @@ void EdgeStereo::linearizeOplus()
 
 void EdgeStereoOnlyPose::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
@@ -455,21 +473,25 @@ void EdgeStereoOnlyPose::linearizeOplus()
 
 VertexVelocity::VertexVelocity(KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     setEstimate(pKF->GetVelocity().cast<double>());
 }
 
 VertexVelocity::VertexVelocity(Frame* pF)
 {
+    PROFILE_FUNCTION();
     setEstimate(pF->GetVelocity().cast<double>());
 }
 
 VertexGyroBias::VertexGyroBias(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     setEstimate(pKF->GetGyroBias().cast<double>());
 }
 
 VertexGyroBias::VertexGyroBias(Frame *pF)
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d bg;
     bg << pF->mImuBias.bwx, pF->mImuBias.bwy,pF->mImuBias.bwz;
     setEstimate(bg);
@@ -477,11 +499,13 @@ VertexGyroBias::VertexGyroBias(Frame *pF)
 
 VertexAccBias::VertexAccBias(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     setEstimate(pKF->GetAccBias().cast<double>());
 }
 
 VertexAccBias::VertexAccBias(Frame *pF)
 {
+    PROFILE_FUNCTION();
     Eigen::Vector3d ba;
     ba << pF->mImuBias.bax, pF->mImuBias.bay,pF->mImuBias.baz;
     setEstimate(ba);
@@ -493,6 +517,7 @@ EdgeInertial::EdgeInertial(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<double>(
     JVg(pInt->JVg.cast<double>()), JPg(pInt->JPg.cast<double>()), JVa(pInt->JVa.cast<double>()),
     JPa(pInt->JPa.cast<double>()), mpInt(pInt), dt(pInt->dT)
 {
+    PROFILE_FUNCTION();
     // This edge links 6 vertices
     resize(6);
     g << 0, 0, -IMU::GRAVITY_VALUE;
@@ -513,6 +538,7 @@ EdgeInertial::EdgeInertial(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<double>(
 
 void EdgeInertial::computeError()
 {
+    PROFILE_FUNCTION();
     // TODO Maybe Reintegrate inertial measurments when difference between linearization point and current estimate is too big
     const VertexPose* VP1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexVelocity* VV1= static_cast<const VertexVelocity*>(_vertices[1]);
@@ -535,6 +561,7 @@ void EdgeInertial::computeError()
 
 void EdgeInertial::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VP1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexVelocity* VV1= static_cast<const VertexVelocity*>(_vertices[1]);
     const VertexGyroBias* VG1= static_cast<const VertexGyroBias*>(_vertices[2]);
@@ -597,6 +624,7 @@ EdgeInertialGS::EdgeInertialGS(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<doub
     JVg(pInt->JVg.cast<double>()), JPg(pInt->JPg.cast<double>()), JVa(pInt->JVa.cast<double>()),
     JPa(pInt->JPa.cast<double>()), mpInt(pInt), dt(pInt->dT)
 {
+    PROFILE_FUNCTION();
     // This edge links 8 vertices
     resize(8);
     gI << 0, 0, -IMU::GRAVITY_VALUE;
@@ -616,6 +644,7 @@ EdgeInertialGS::EdgeInertialGS(IMU::Preintegrated *pInt):JRg(pInt->JRg.cast<doub
 
 void EdgeInertialGS::computeError()
 {
+    PROFILE_FUNCTION();
     // TODO Maybe Reintegrate inertial measurments when difference between linearization point and current estimate is too big
     const VertexPose* VP1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexVelocity* VV1= static_cast<const VertexVelocity*>(_vertices[1]);
@@ -641,6 +670,7 @@ void EdgeInertialGS::computeError()
 
 void EdgeInertialGS::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VP1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexVelocity* VV1= static_cast<const VertexVelocity*>(_vertices[1]);
     const VertexGyroBias* VG= static_cast<const VertexGyroBias*>(_vertices[2]);
@@ -719,6 +749,7 @@ void EdgeInertialGS::linearizeOplus()
 
 EdgePriorPoseImu::EdgePriorPoseImu(ConstraintPoseImu *c)
 {
+    PROFILE_FUNCTION();
     resize(4);
     Rwb = c->Rwb;
     twb = c->twb;
@@ -730,6 +761,7 @@ EdgePriorPoseImu::EdgePriorPoseImu(ConstraintPoseImu *c)
 
 void EdgePriorPoseImu::computeError()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VP = static_cast<const VertexPose*>(_vertices[0]);
     const VertexVelocity* VV = static_cast<const VertexVelocity*>(_vertices[1]);
     const VertexGyroBias* VG = static_cast<const VertexGyroBias*>(_vertices[2]);
@@ -746,6 +778,7 @@ void EdgePriorPoseImu::computeError()
 
 void EdgePriorPoseImu::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     const VertexPose* VP = static_cast<const VertexPose*>(_vertices[0]);
     const Eigen::Vector3d er = LogSO3(Rwb.transpose()*VP->estimate().Rwb);
     _jacobianOplus[0].setZero();
@@ -761,6 +794,7 @@ void EdgePriorPoseImu::linearizeOplus()
 
 void EdgePriorAcc::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     // Jacobian wrt bias
     _jacobianOplusXi.block<3,3>(0,0) = Eigen::Matrix3d::Identity();
 
@@ -768,6 +802,7 @@ void EdgePriorAcc::linearizeOplus()
 
 void EdgePriorGyro::linearizeOplus()
 {
+    PROFILE_FUNCTION();
     // Jacobian wrt bias
     _jacobianOplusXi.block<3,3>(0,0) = Eigen::Matrix3d::Identity();
 
@@ -781,6 +816,7 @@ Eigen::Matrix3d ExpSO3(const Eigen::Vector3d &w)
 
 Eigen::Matrix3d ExpSO3(const double x, const double y, const double z)
 {
+    PROFILE_FUNCTION();
     const double d2 = x*x+y*y+z*z;
     const double d = sqrt(d2);
     Eigen::Matrix3d W;
@@ -799,6 +835,7 @@ Eigen::Matrix3d ExpSO3(const double x, const double y, const double z)
 
 Eigen::Vector3d LogSO3(const Eigen::Matrix3d &R)
 {
+    PROFILE_FUNCTION();
     const double tr = R(0,0)+R(1,1)+R(2,2);
     Eigen::Vector3d w;
     w << (R(2,1)-R(1,2))/2, (R(0,2)-R(2,0))/2, (R(1,0)-R(0,1))/2;
@@ -820,6 +857,7 @@ Eigen::Matrix3d InverseRightJacobianSO3(const Eigen::Vector3d &v)
 
 Eigen::Matrix3d InverseRightJacobianSO3(const double x, const double y, const double z)
 {
+    PROFILE_FUNCTION();
     const double d2 = x*x+y*y+z*z;
     const double d = sqrt(d2);
 
@@ -838,6 +876,7 @@ Eigen::Matrix3d RightJacobianSO3(const Eigen::Vector3d &v)
 
 Eigen::Matrix3d RightJacobianSO3(const double x, const double y, const double z)
 {
+    PROFILE_FUNCTION();
     const double d2 = x*x+y*y+z*z;
     const double d = sqrt(d2);
 

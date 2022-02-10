@@ -33,6 +33,9 @@
 
 #include <mutex>
 #include <chrono>
+#include "prof.h"
+#include "profTime.h"
+
 
 
 using namespace std;
@@ -48,6 +51,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
     mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
 {
+    PROFILE_FUNCTION();
     // Load camera parameters from settings file
     if(settings){
         newParameterLoader(settings);
@@ -533,6 +537,7 @@ Tracking::~Tracking()
 }
 
 void Tracking::newParameterLoader(Settings *settings) {
+    PROFILE_FUNCTION();
     mpCamera = settings->camera1();
     mpCamera = mpAtlas->AddCamera(mpCamera);
 
@@ -618,6 +623,7 @@ void Tracking::newParameterLoader(Settings *settings) {
 
 bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
 {
+    PROFILE_FUNCTION();
     mDistCoef = cv::Mat::zeros(4,1,CV_32F);
     cout << endl << "Camera Parameters: " << endl;
     bool b_miss_params = false;
@@ -1216,6 +1222,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
 
 bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
 {
+    PROFILE_FUNCTION();
     bool b_miss_params = false;
     int nFeatures, nLevels, fIniThFAST, fMinThFAST;
     float fScaleFactor;
@@ -1300,6 +1307,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
 
 bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
 {
+    PROFILE_FUNCTION();
     bool b_miss_params = false;
 
     cv::Mat cvTbc;
@@ -1453,6 +1461,7 @@ bool Tracking::GetStepByStep()
 
 Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
 {
+    PROFILE_FUNCTION();
     //cout << "GrabImageStereo" << endl;
 
     mImGray = imRectLeft;
@@ -1519,6 +1528,7 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 
 Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename)
 {
+    PROFILE_FUNCTION();
     mImGray = imRGB;
     cv::Mat imDepth = imD;
 
@@ -1565,6 +1575,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
 
 Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename)
 {
+    PROFILE_FUNCTION();
     mImGray = im;
     if(mImGray.channels()==3)
     {
@@ -1617,13 +1628,14 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
 
 void Tracking::GrabImuData(const IMU::Point &imuMeasurement)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexImuQueue);
     mlQueueImuData.push_back(imuMeasurement);
 }
 
 void Tracking::PreintegrateIMU()
 {
-
+    PROFILE_FUNCTION();
     if(!mCurrentFrame.mpPrevFrame)
     {
         Verbose::PrintMess("non prev frame ", Verbose::VERBOSITY_NORMAL);
@@ -1737,6 +1749,7 @@ void Tracking::PreintegrateIMU()
 
 bool Tracking::PredictStateIMU()
 {
+    PROFILE_FUNCTION();
     if(!mCurrentFrame.mpPrevFrame)
     {
         Verbose::PrintMess("No last frame", Verbose::VERBOSITY_NORMAL);
@@ -1793,7 +1806,7 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
-
+    PROFILE_FUNCTION();
     if (bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;
@@ -2334,6 +2347,7 @@ void Tracking::Track()
 
 void Tracking::StereoInitialization()
 {
+    PROFILE_FUNCTION();
     if(mCurrentFrame.N>500)
     {
         if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
@@ -2447,7 +2461,7 @@ void Tracking::StereoInitialization()
 
 void Tracking::MonocularInitialization()
 {
-
+    PROFILE_FUNCTION();
     if(!mbReadyToInitializate)
     {
         // Set Reference Frame
@@ -2525,6 +2539,7 @@ void Tracking::MonocularInitialization()
 
 void Tracking::CreateInitialMapMonocular()
 {
+    PROFILE_FUNCTION();
     // Create KeyFrames
     KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
     KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
@@ -2661,6 +2676,7 @@ void Tracking::CreateInitialMapMonocular()
 
 void Tracking::CreateMapInAtlas()
 {
+    PROFILE_FUNCTION();
     mnLastInitFrameId = mCurrentFrame.mnId;
     mpAtlas->CreateNewMap();
     if (mSensor==System::IMU_STEREO || mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_RGBD)
@@ -2701,6 +2717,7 @@ void Tracking::CreateMapInAtlas()
 
 void Tracking::CheckReplacedInLastFrame()
 {
+    PROFILE_FUNCTION();
     for(int i =0; i<mLastFrame.N; i++)
     {
         MapPoint* pMP = mLastFrame.mvpMapPoints[i];
@@ -2719,6 +2736,7 @@ void Tracking::CheckReplacedInLastFrame()
 
 bool Tracking::TrackReferenceKeyFrame()
 {
+    PROFILE_FUNCTION();
     // Compute Bag of Words vector
     mCurrentFrame.ComputeBoW();
 
@@ -2780,6 +2798,7 @@ bool Tracking::TrackReferenceKeyFrame()
 
 void Tracking::UpdateLastFrame()
 {
+    PROFILE_FUNCTION();
     // Update pose according to reference keyframe
     KeyFrame* pRef = mLastFrame.mpReferenceKF;
     Sophus::SE3f Tlr = mlRelativeFramePoses.back();
@@ -2853,6 +2872,7 @@ void Tracking::UpdateLastFrame()
 
 bool Tracking::TrackWithMotionModel()
 {
+    PROFILE_FUNCTION();
     ORBmatcher matcher(0.9,true);
 
     // Update last frame pose according to its reference keyframe
@@ -2948,7 +2968,7 @@ bool Tracking::TrackWithMotionModel()
 
 bool Tracking::TrackLocalMap()
 {
-
+    PROFILE_FUNCTION();
     // We have an estimation of the camera pose and some map points tracked in the frame.
     // We retrieve the local map and try to find matches to points in the local map.
     mTrackedFr++;
@@ -3063,6 +3083,7 @@ bool Tracking::TrackLocalMap()
 
 bool Tracking::NeedNewKeyFrame()
 {
+    PROFILE_FUNCTION();
     if((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && !mpAtlas->GetCurrentMap()->isImuInitialized())
     {
         if (mSensor == System::IMU_MONOCULAR && (mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.25)
@@ -3215,6 +3236,7 @@ bool Tracking::NeedNewKeyFrame()
 
 void Tracking::CreateNewKeyFrame()
 {
+    PROFILE_FUNCTION();
     if(mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
         return;
 
@@ -3342,6 +3364,7 @@ void Tracking::CreateNewKeyFrame()
 
 void Tracking::SearchLocalPoints()
 {
+    PROFILE_FUNCTION();
     // Do not search map points already matched
     for(vector<MapPoint*>::iterator vit=mCurrentFrame.mvpMapPoints.begin(), vend=mCurrentFrame.mvpMapPoints.end(); vit!=vend; vit++)
     {
@@ -3411,11 +3434,15 @@ void Tracking::SearchLocalPoints()
             th=15; // 15
 
         int matches = matcher.SearchByProjection(mCurrentFrame, mvpLocalMapPoints, th, mpLocalMapper->mbFarPoints, mpLocalMapper->mThFarPoints);
+
+        //int matches = matcher.SearchByProjectionParallel(mCurrentFrame, mvpLocalMapPoints, th, mpLocalMapper->mbFarPoints, mpLocalMapper->mThFarPoints);
+
     }
 }
 
 void Tracking::UpdateLocalMap()
 {
+    PROFILE_FUNCTION();
     // This is for visualization
     mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);
 
@@ -3426,6 +3453,7 @@ void Tracking::UpdateLocalMap()
 
 void Tracking::UpdateLocalPoints()
 {
+    PROFILE_FUNCTION();
     mvpLocalMapPoints.clear();
 
     int count_pts = 0;
@@ -3456,6 +3484,7 @@ void Tracking::UpdateLocalPoints()
 
 void Tracking::UpdateLocalKeyFrames()
 {
+    PROFILE_FUNCTION();
     // Each map point vote for the keyframes in which it has been observed
     map<KeyFrame*,int> keyframeCounter;
     if(!mpAtlas->isImuInitialized() || (mCurrentFrame.mnId<mnLastRelocFrameId+2))
@@ -3608,6 +3637,7 @@ void Tracking::UpdateLocalKeyFrames()
 
 bool Tracking::Relocalization()
 {
+    PROFILE_FUNCTION();
     Verbose::PrintMess("Starting relocalization", Verbose::VERBOSITY_NORMAL);
     // Compute Bag of Words Vector
     mCurrentFrame.ComputeBoW();
@@ -3778,6 +3808,7 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset(bool bLocMap)
 {
+    PROFILE_FUNCTION();
     Verbose::PrintMess("System Reseting", Verbose::VERBOSITY_NORMAL);
 
     if(mpViewer)
@@ -3839,6 +3870,7 @@ void Tracking::Reset(bool bLocMap)
 
 void Tracking::ResetActiveMap(bool bLocMap)
 {
+    PROFILE_FUNCTION();
     Verbose::PrintMess("Active map Reseting", Verbose::VERBOSITY_NORMAL);
     if(mpViewer)
     {
@@ -3935,6 +3967,7 @@ vector<MapPoint*> Tracking::GetLocalMapMPS()
 
 void Tracking::ChangeCalibration(const string &strSettingPath)
 {
+    PROFILE_FUNCTION();
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -3979,6 +4012,7 @@ void Tracking::InformOnlyTracking(const bool &flag)
 
 void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurrentKeyFrame)
 {
+    PROFILE_FUNCTION();
     Map * pMap = pCurrentKeyFrame->GetMap();
     unsigned int index = mnFirstFrameId;
     list<ORB_SLAM3::KeyFrame*>::iterator lRit = mlpReferences.begin();
@@ -4067,12 +4101,14 @@ int Tracking::GetMatchesInliers()
 
 void Tracking::SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, string strFolder)
 {
+    PROFILE_FUNCTION();
     mpSystem->SaveTrajectoryEuRoC(strFolder + strNameFile_frames);
     //mpSystem->SaveKeyFrameTrajectoryEuRoC(strFolder + strNameFile_kf);
 }
 
 void Tracking::SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, Map* pMap)
 {
+    PROFILE_FUNCTION();
     mpSystem->SaveTrajectoryEuRoC(strNameFile_frames, pMap);
     if(!strNameFile_kf.empty())
         mpSystem->SaveKeyFrameTrajectoryEuRoC(strNameFile_kf, pMap);

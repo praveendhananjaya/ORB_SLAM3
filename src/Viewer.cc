@@ -21,6 +21,8 @@
 #include <pangolin/pangolin.h>
 
 #include <mutex>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -29,6 +31,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
     both(false), mpSystem(pSystem), mpFrameDrawer(pFrameDrawer),mpMapDrawer(pMapDrawer), mpTracker(pTracking),
     mbFinishRequested(false), mbFinished(true), mbStopped(true), mbStopRequested(false)
 {
+    PROFILE_FUNCTION();
     if(settings){
         newParameterLoader(settings);
     }
@@ -56,6 +59,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
 }
 
 void Viewer::newParameterLoader(Settings *settings) {
+    PROFILE_FUNCTION();
     mImageViewerScale = 1.f;
 
     float fps = settings->fps();
@@ -76,6 +80,7 @@ void Viewer::newParameterLoader(Settings *settings) {
 
 bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
 {
+    PROFILE_FUNCTION();
     bool b_miss_params = false;
     mImageViewerScale = 1.f;
 
@@ -161,6 +166,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
 
 void Viewer::Run()
 {
+    PROFILE_FUNCTION();
     mbFinished = false;
     mbStopped = false;
 
@@ -385,18 +391,21 @@ void Viewer::Run()
 
 void Viewer::RequestFinish()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFinish);
     mbFinishRequested = true;
 }
 
 bool Viewer::CheckFinish()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFinish);
     return mbFinishRequested;
 }
 
 void Viewer::SetFinish()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFinish);
     mbFinished = true;
 }

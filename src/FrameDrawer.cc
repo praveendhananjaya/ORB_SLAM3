@@ -23,12 +23,15 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include<mutex>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
 
 FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 {
+    PROFILE_FUNCTION();
     mState=Tracking::SYSTEM_NOT_READY;
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     mImRight = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
@@ -36,6 +39,7 @@ FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 
 cv::Mat FrameDrawer::DrawFrame(float imageScale)
 {
+    PROFILE_FUNCTION();
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -203,6 +207,7 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale)
 
 cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
 {
+    PROFILE_FUNCTION();
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -330,6 +335,7 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
 
 void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 {
+    PROFILE_FUNCTION();
     stringstream s;
     if(nState==Tracking::NO_IMAGES_YET)
         s << " WAITING FOR IMAGES";
@@ -369,6 +375,7 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 
 void FrameDrawer::Update(Tracking *pTracker)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;

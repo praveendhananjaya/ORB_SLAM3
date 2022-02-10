@@ -22,6 +22,8 @@
 #include "GeometricTools.h"
 
 #include<iostream>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -32,12 +34,14 @@ namespace IMU
 const float eps = 1e-4;
 
 Eigen::Matrix3f NormalizeRotation(const Eigen::Matrix3f &R){
+    PROFILE_FUNCTION();
     Eigen::JacobiSVD<Eigen::Matrix3f> svd(R, Eigen::ComputeFullU | Eigen::ComputeFullV);
     return svd.matrixU() * svd.matrixV().transpose();
 }
 
 Eigen::Matrix3f RightJacobianSO3(const float &x, const float &y, const float &z)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix3f I;
     I.setIdentity();
     const float d2 = x*x+y*y+z*z;
@@ -60,6 +64,7 @@ Eigen::Matrix3f RightJacobianSO3(const Eigen::Vector3f &v)
 
 Eigen::Matrix3f InverseRightJacobianSO3(const float &x, const float &y, const float &z)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix3f I;
     I.setIdentity();
     const float d2 = x*x+y*y+z*z;
@@ -82,6 +87,7 @@ Eigen::Matrix3f InverseRightJacobianSO3(const Eigen::Vector3f &v)
 }
 
 IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias &imuBias, const float &time) {
+    PROFILE_FUNCTION();
     const float x = (angVel(0)-imuBias.bwx)*time;
     const float y = (angVel(1)-imuBias.bwy)*time;
     const float z = (angVel(2)-imuBias.bwz)*time;
@@ -106,6 +112,7 @@ IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias
 
 Preintegrated::Preintegrated(const Bias &b_, const Calib &calib)
 {
+    PROFILE_FUNCTION();
     Nga = calib.Cov;
     NgaWalk = calib.CovWalk;
     Initialize(b_);
@@ -122,6 +129,7 @@ Preintegrated::Preintegrated(Preintegrated* pImuPre): dT(pImuPre->dT),C(pImuPre-
 
 void Preintegrated::CopyFrom(Preintegrated* pImuPre)
 {
+    PROFILE_FUNCTION();
     dT = pImuPre->dT;
     C = pImuPre->C;
     Info = pImuPre->Info;
@@ -146,6 +154,7 @@ void Preintegrated::CopyFrom(Preintegrated* pImuPre)
 
 void Preintegrated::Initialize(const Bias &b_)
 {
+    PROFILE_FUNCTION();
     dR.setIdentity();
     dV.setZero();
     dP.setZero();
@@ -167,6 +176,7 @@ void Preintegrated::Initialize(const Bias &b_)
 
 void Preintegrated::Reintegrate()
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     const std::vector<integrable> aux = mvMeasurements;
     Initialize(bu);
@@ -176,6 +186,7 @@ void Preintegrated::Reintegrate()
 
 void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration, const Eigen::Vector3f &angVel, const float &dt)
 {
+    PROFILE_FUNCTION();
     mvMeasurements.push_back(integrable(acceleration,angVel,dt));
 
     // Position is updated firstly, as it depends on previously computed velocity and rotation.
@@ -236,6 +247,7 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
 
 void Preintegrated::MergePrevious(Preintegrated* pPrev)
 {
+    PROFILE_FUNCTION();
     if (pPrev==this)
         return;
 
@@ -262,6 +274,7 @@ void Preintegrated::MergePrevious(Preintegrated* pPrev)
 
 void Preintegrated::SetNewBias(const Bias &bu_)
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     bu = bu_;
 
@@ -275,6 +288,7 @@ void Preintegrated::SetNewBias(const Bias &bu_)
 
 IMU::Bias Preintegrated::GetDeltaBias(const Bias &b_)
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     return IMU::Bias(b_.bax-b.bax,b_.bay-b.bay,b_.baz-b.baz,b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz);
 }
@@ -282,6 +296,7 @@ IMU::Bias Preintegrated::GetDeltaBias(const Bias &b_)
 
 Eigen::Matrix3f Preintegrated::GetDeltaRotation(const Bias &b_)
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     Eigen::Vector3f dbg;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
@@ -290,6 +305,7 @@ Eigen::Matrix3f Preintegrated::GetDeltaRotation(const Bias &b_)
 
 Eigen::Vector3f Preintegrated::GetDeltaVelocity(const Bias &b_)
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     Eigen::Vector3f dbg, dba;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
@@ -299,6 +315,7 @@ Eigen::Vector3f Preintegrated::GetDeltaVelocity(const Bias &b_)
 
 Eigen::Vector3f Preintegrated::GetDeltaPosition(const Bias &b_)
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     Eigen::Vector3f dbg, dba;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
@@ -308,6 +325,7 @@ Eigen::Vector3f Preintegrated::GetDeltaPosition(const Bias &b_)
 
 Eigen::Matrix3f Preintegrated::GetUpdatedDeltaRotation()
 {
+    PROFILE_FUNCTION();
     std::unique_lock<std::mutex> lock(mMutex);
     return NormalizeRotation(dR * Sophus::SO3f::exp(JRg*db.head(3)).matrix());
 }
@@ -370,6 +388,7 @@ void Bias::CopyFrom(Bias &b)
 
 std::ostream& operator<< (std::ostream &out, const Bias &b)
 {
+    PROFILE_FUNCTION();
     if(b.bwx>0)
         out << " ";
     out << b.bwx << ",";
@@ -393,6 +412,7 @@ std::ostream& operator<< (std::ostream &out, const Bias &b)
 }
 
 void Calib::Set(const Sophus::SE3<float> &sophTbc, const float &ng, const float &na, const float &ngw, const float &naw) {
+    PROFILE_FUNCTION();
     mbIsSet = true;
     const float ng2 = ng*ng;
     const float na2 = na*na;

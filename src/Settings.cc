@@ -27,6 +27,8 @@
 #include <opencv2/core/eigen.hpp>
 
 #include <iostream>
+#include "prof.h"
+#include "profTime.h"
 
 using namespace std;
 
@@ -34,6 +36,7 @@ namespace ORB_SLAM3 {
 
     template<>
     float Settings::readParameter<float>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+        PROFILE_FUNCTION();
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
@@ -58,6 +61,7 @@ namespace ORB_SLAM3 {
 
     template<>
     int Settings::readParameter<int>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+        PROFILE_FUNCTION();
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
@@ -82,6 +86,7 @@ namespace ORB_SLAM3 {
 
     template<>
     string Settings::readParameter<string>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+        PROFILE_FUNCTION();
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
@@ -106,6 +111,7 @@ namespace ORB_SLAM3 {
 
     template<>
     cv::Mat Settings::readParameter<cv::Mat>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+        PROFILE_FUNCTION();
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
@@ -126,6 +132,7 @@ namespace ORB_SLAM3 {
 
     Settings::Settings(const std::string &configFile, const int& sensor) :
     bNeedToUndistort_(false), bNeedToRectify_(false), bNeedToResize1_(false), bNeedToResize2_(false) {
+        PROFILE_FUNCTION();
         sensor_ = sensor;
 
         //Open settings file
@@ -182,6 +189,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readCamera1(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         //Read camera model
@@ -274,6 +282,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readCamera2(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
         vector<float> vCalibration;
         if (cameraType_ == PinHole) {
@@ -354,6 +363,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readImageInfo(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
         //Read original and desired image dimensions
         int originalRows = readParameter<int>(fSettings,"Camera.height",found);
@@ -412,6 +422,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readIMU(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
         noiseGyro_ = readParameter<float>(fSettings,"IMU.NoiseGyro",found);
         noiseAcc_ = readParameter<float>(fSettings,"IMU.NoiseAcc",found);
@@ -432,6 +443,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readRGBD(cv::FileStorage& fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         depthMapFactor_ = readParameter<float>(fSettings,"RGBD.DepthMapFactor",found);
@@ -441,6 +453,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readORB(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         nFeatures_ = readParameter<int>(fSettings,"ORBextractor.nFeatures",found);
@@ -451,6 +464,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readViewer(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         keyFrameSize_ = readParameter<float>(fSettings,"Viewer.KeyFrameSize",found);
@@ -470,6 +484,7 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readLoadAndSave(cv::FileStorage &fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         sLoadFrom_ = readParameter<string>(fSettings,"System.LoadAtlasFromFile",found,false);
@@ -477,12 +492,14 @@ namespace ORB_SLAM3 {
     }
 
     void Settings::readOtherParameters(cv::FileStorage& fSettings) {
+        PROFILE_FUNCTION();
         bool found;
 
         thFarPoints_ = readParameter<float>(fSettings,"System.thFarPoints",found,false);
     }
 
     void Settings::precomputeRectificationMaps() {
+        PROFILE_FUNCTION();
         //Precompute rectification maps, new calibrations, ...
         cv::Mat K1 = static_cast<Pinhole*>(calibration1_)->toK();
         K1.convertTo(K1,CV_64F);
@@ -527,6 +544,7 @@ namespace ORB_SLAM3 {
     }
 
     ostream &operator<<(std::ostream& output, const Settings& settings){
+        PROFILE_FUNCTION();
         output << "SLAM settings: " << endl;
 
         output << "\t-Camera 1 parameters (";

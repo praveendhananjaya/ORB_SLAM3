@@ -62,6 +62,7 @@
 #include "ORBextractor.h"
 
 
+
 using namespace cv;
 using namespace std;
 
@@ -75,6 +76,7 @@ namespace ORB_SLAM3
 
     static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
     {
+        //PROFILE_FUNCTION();
         int m_01 = 0, m_10 = 0;
 
         const uchar* center = &image.at<uchar> (cvRound(pt.y), cvRound(pt.x));
@@ -108,6 +110,7 @@ namespace ORB_SLAM3
                                      const Mat& img, const Point* pattern,
                                      uchar* desc)
     {
+       // PROFILE_FUNCTION();
         float angle = (float)kpt.angle*factorPI;
         float a = (float)cos(angle), b = (float)sin(angle);
 
@@ -411,6 +414,8 @@ namespace ORB_SLAM3
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
             iniThFAST(_iniThFAST), minThFAST(_minThFAST)
     {
+        PROFILE_FUNCTION();
+        //PROFILE_FUNCTION();
         mvScaleFactor.resize(nlevels);
         mvLevelSigma2.resize(nlevels);
         mvScaleFactor[0]=1.0f;
@@ -470,6 +475,7 @@ namespace ORB_SLAM3
 
     static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
     {
+        PROFILE_FUNCTION();
         for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                      keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint)
         {
@@ -479,6 +485,7 @@ namespace ORB_SLAM3
 
     void ExtractorNode::DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNode &n3, ExtractorNode &n4)
     {
+        PROFILE_FUNCTION();
         const int halfX = ceil(static_cast<float>(UR.x-UL.x)/2);
         const int halfY = ceil(static_cast<float>(BR.y-UL.y)/2);
 
@@ -536,6 +543,7 @@ namespace ORB_SLAM3
     }
 
     static bool compareNodes(pair<int,ExtractorNode*>& e1, pair<int,ExtractorNode*>& e2){
+        PROFILE_FUNCTION();
         if(e1.first < e2.first){
             return true;
         }
@@ -556,6 +564,7 @@ namespace ORB_SLAM3
                                                          const int &maxX, const int &minY, const int &maxY, const int &N, const int &level)
     {
         // Compute how many initial nodes
+        PROFILE_FUNCTION();
         const int nIni = round(static_cast<float>(maxX-minX)/(maxY-minY));
 
         const float hX = static_cast<float>(maxX-minX)/nIni;
@@ -780,6 +789,7 @@ namespace ORB_SLAM3
 
     void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
     {
+        PROFILE_FUNCTION();
         allKeypoints.resize(nlevels);
 
         const float W = 35;
@@ -897,6 +907,7 @@ namespace ORB_SLAM3
 
     void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allKeypoints)
     {
+        PROFILE_FUNCTION();
         allKeypoints.resize(nlevels);
 
         float imageRatio = (float)mvImagePyramid[0].cols/mvImagePyramid[0].rows;
@@ -1077,6 +1088,7 @@ namespace ORB_SLAM3
     static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Mat& descriptors,
                                    const vector<Point>& pattern)
     {
+        PROFILE_FUNCTION();
         descriptors = Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
 
         for (size_t i = 0; i < keypoints.size(); i++)
@@ -1086,6 +1098,7 @@ namespace ORB_SLAM3
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea)
     {
+        PROFILE_FUNCTION();
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
             return -1;
@@ -1169,6 +1182,7 @@ namespace ORB_SLAM3
 
     void ORBextractor::ComputePyramid(cv::Mat image)
     {
+        PROFILE_FUNCTION();
         for (int level = 0; level < nlevels; ++level)
         {
             float scale = mvInvScaleFactor[level];

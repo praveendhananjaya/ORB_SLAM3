@@ -23,6 +23,8 @@
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 
 #include<mutex>
+#include "prof.h"
+#include "profTime.h"
 
 using namespace std;
 
@@ -32,12 +34,14 @@ namespace ORB_SLAM3
 KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
     mpVoc(&voc)
 {
+    PROFILE_FUNCTION();
     mvInvertedFile.resize(voc.size());
 }
 
 
 void KeyFrameDatabase::add(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutex);
 
     for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
@@ -46,6 +50,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
 
 void KeyFrameDatabase::erase(KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutex);
 
     // Erase elements in the Inverse File for the entry
@@ -67,12 +72,14 @@ void KeyFrameDatabase::erase(KeyFrame* pKF)
 
 void KeyFrameDatabase::clear()
 {
+    PROFILE_FUNCTION();
     mvInvertedFile.clear();
     mvInvertedFile.resize(mpVoc->size());
 }
 
 void KeyFrameDatabase::clearMap(Map* pMap)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutex);
 
     // Erase elements in the Inverse File for the entry
@@ -99,6 +106,7 @@ void KeyFrameDatabase::clearMap(Map* pMap)
 
 vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float minScore)
 {
+    PROFILE_FUNCTION();
     set<KeyFrame*> spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
     list<KeyFrame*> lKFsSharingWords;
 
@@ -227,6 +235,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
 
 void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<KeyFrame*>& vpLoopCand, vector<KeyFrame*>& vpMergeCand)
 {
+    PROFILE_FUNCTION();
     set<KeyFrame*> spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
     list<KeyFrame*> lKFsSharingWordsLoop,lKFsSharingWordsMerge;
 
@@ -467,6 +476,7 @@ void KeyFrameDatabase::DetectCandidates(KeyFrame* pKF, float minScore,vector<Key
 
 void KeyFrameDatabase::DetectBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nMinWords)
 {
+    PROFILE_FUNCTION();
     list<KeyFrame*> lKFsSharingWords;
     set<KeyFrame*> spConnectedKF;
 
@@ -603,6 +613,7 @@ bool compFirst(const pair<float, KeyFrame*> & a, const pair<float, KeyFrame*> & 
 
 void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nNumCandidates)
 {
+    PROFILE_FUNCTION();
     list<KeyFrame*> lKFsSharingWords;
     set<KeyFrame*> spConnectedKF;
 
@@ -732,6 +743,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
 
 vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map* pMap)
 {
+    PROFILE_FUNCTION();
     list<KeyFrame*> lKFsSharingWords;
 
     // Search all keyframes that share a word with current frame
@@ -846,6 +858,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map
 
 void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
 {
+    PROFILE_FUNCTION();
     ORBVocabulary** ptr;
     ptr = (ORBVocabulary**)( &mpVoc );
     *ptr = pORBVoc;

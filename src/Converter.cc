@@ -17,12 +17,15 @@
 */
 
 #include "Converter.h"
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
 
 std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
+    PROFILE_FUNCTION();
     std::vector<cv::Mat> vDesc;
     vDesc.reserve(Descriptors.rows);
     for (int j=0;j<Descriptors.rows;j++)
@@ -33,6 +36,7 @@ std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 
 g2o::SE3Quat Converter::toSE3Quat(const cv::Mat &cvT)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix<double,3,3> R;
     R << cvT.at<float>(0,0), cvT.at<float>(0,1), cvT.at<float>(0,2),
          cvT.at<float>(1,0), cvT.at<float>(1,1), cvT.at<float>(1,2),
@@ -64,6 +68,7 @@ cv::Mat Converter::toCvMat(const g2o::Sim3 &Sim3)
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 {
+    PROFILE_FUNCTION();
     cv::Mat cvMat(4,4,CV_32F);
     for(int i=0;i<4;i++)
         for(int j=0; j<4; j++)
@@ -104,6 +109,7 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m)
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix3f &m)
 {
+    PROFILE_FUNCTION();
     cv::Mat cvMat(3,3,CV_32F);
     for(int i=0;i<3;i++)
         for(int j=0; j<3; j++)
@@ -152,6 +158,7 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
 
 cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
 {
+    PROFILE_FUNCTION();
     cv::Mat cvMat = cv::Mat::eye(4,4,CV_32F);
     for(int i=0;i<3;i++)
     {
@@ -216,6 +223,7 @@ Eigen::Matrix<double,4,4> Converter::toMatrix4d(const cv::Mat &cvMat4)
 
 Eigen::Matrix<float,3,3> Converter::toMatrix3f(const cv::Mat &cvMat3)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix<float,3,3> M;
 
     M << cvMat3.at<float>(0,0), cvMat3.at<float>(0,1), cvMat3.at<float>(0,2),

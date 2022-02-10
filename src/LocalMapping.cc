@@ -26,6 +26,8 @@
 
 #include<mutex>
 #include<chrono>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -35,6 +37,7 @@ LocalMapping::LocalMapping(System* pSys, Atlas *pAtlas, const float bMonocular, 
     mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true),
     mIdxInit(0), mScale(1.0), mInitSect(0), mbNotBA1(true), mbNotBA2(true), mIdxIteration(0), infoInertial(Eigen::MatrixXd::Zero(9,9))
 {
+    PROFILE_FUNCTION();
     mnMatchesInliers = 0;
 
     mbBadImu = false;
@@ -63,6 +66,7 @@ void LocalMapping::SetTracker(Tracking *pTracker)
 
 void LocalMapping::Run()
 {
+    PROFILE_FUNCTION();
     mbFinished = false;
 
     while(1)
@@ -297,7 +301,9 @@ bool LocalMapping::CheckNewKeyFrames()
 
 void LocalMapping::ProcessNewKeyFrame()
 {
+    PROFILE_FUNCTION();
     {
+
         unique_lock<mutex> lock(mMutexNewKFs);
         mpCurrentKeyFrame = mlNewKeyFrames.front();
         mlNewKeyFrames.pop_front();
@@ -339,12 +345,14 @@ void LocalMapping::ProcessNewKeyFrame()
 
 void LocalMapping::EmptyQueue()
 {
+    PROFILE_FUNCTION();
     while(CheckNewKeyFrames())
         ProcessNewKeyFrame();
 }
 
 void LocalMapping::MapPointCulling()
 {
+    PROFILE_FUNCTION();
     // Check Recent Added MapPoints
     list<MapPoint*>::iterator lit = mlpRecentAddedMapPoints.begin();
     const unsigned long int nCurrentKFid = mpCurrentKeyFrame->mnId;
@@ -387,6 +395,7 @@ void LocalMapping::MapPointCulling()
 
 void LocalMapping::CreateNewMapPoints()
 {
+    PROFILE_FUNCTION();
     // Retrieve neighbor keyframes in covisibility graph
     int nn = 10;
     // For stereo inertial case
@@ -713,6 +722,7 @@ void LocalMapping::CreateNewMapPoints()
 
 void LocalMapping::SearchInNeighbors()
 {
+    PROFILE_FUNCTION();
     // Retrieve neighbor keyframes
     int nn = 10;
     if(mbMonocular)
@@ -824,6 +834,7 @@ void LocalMapping::SearchInNeighbors()
 
 void LocalMapping::RequestStop()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
     mbStopRequested = true;
     unique_lock<mutex> lock2(mMutexNewKFs);
@@ -832,6 +843,7 @@ void LocalMapping::RequestStop()
 
 bool LocalMapping::Stop()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
     if(mbStopRequested && !mbNotStop)
     {
@@ -845,18 +857,21 @@ bool LocalMapping::Stop()
 
 bool LocalMapping::isStopped()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
     return mbStopped;
 }
 
 bool LocalMapping::stopRequested()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
     return mbStopRequested;
 }
 
 void LocalMapping::Release()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
     unique_lock<mutex> lock2(mMutexFinish);
     if(mbFinished)
@@ -872,18 +887,21 @@ void LocalMapping::Release()
 
 bool LocalMapping::AcceptKeyFrames()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAccept);
     return mbAcceptKeyFrames;
 }
 
 void LocalMapping::SetAcceptKeyFrames(bool flag)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAccept);
     mbAcceptKeyFrames=flag;
 }
 
 bool LocalMapping::SetNotStop(bool flag)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexStop);
 
     if(flag && mbStopped)
@@ -901,6 +919,7 @@ void LocalMapping::InterruptBA()
 
 void LocalMapping::KeyFrameCulling()
 {
+    PROFILE_FUNCTION();
     // Check redundant keyframes (only local keyframes)
     // A keyframe is considered redundant if the 90% of the MapPoints it sees, are seen
     // in at least other 3 keyframes (in the same or finer scale)
@@ -1055,6 +1074,7 @@ void LocalMapping::KeyFrameCulling()
 
 void LocalMapping::RequestReset()
 {
+
     {
         unique_lock<mutex> lock(mMutexReset);
         cout << "LM: Map reset recieved" << endl;
@@ -1172,6 +1192,7 @@ bool LocalMapping::isFinished()
 
 void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 {
+    PROFILE_FUNCTION();
     if (mbResetRequested)
         return;
 

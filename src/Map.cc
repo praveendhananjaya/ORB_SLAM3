@@ -18,8 +18,11 @@
 
 
 #include "Map.h"
-
+#include "prof.h"
+#include "profTime.h"
 #include<mutex>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -29,6 +32,7 @@ long unsigned int Map::nNextId=0;
 Map::Map():mnMaxKFid(0),mnBigChangeIdx(0), mbImuInitialized(false), mnMapChange(0), mpFirstRegionKF(static_cast<KeyFrame*>(NULL)),
 mbFail(false), mIsInUse(false), mHasTumbnail(false), mbBad(false), mnMapChangeNotified(0), mbIsInertial(false), mbIMU_BA1(false), mbIMU_BA2(false)
 {
+    PROFILE_FUNCTION();
     mnId=nNextId++;
     mThumbnail = static_cast<GLubyte*>(NULL);
 }
@@ -37,6 +41,7 @@ Map::Map(int initKFid):mnInitKFid(initKFid), mnMaxKFid(initKFid),/*mnLastLoopKFi
                        mHasTumbnail(false), mbBad(false), mbImuInitialized(false), mpFirstRegionKF(static_cast<KeyFrame*>(NULL)),
                        mnMapChange(0), mbFail(false), mnMapChangeNotified(0), mbIsInertial(false), mbIMU_BA1(false), mbIMU_BA2(false)
 {
+    PROFILE_FUNCTION();
     mnId=nNextId++;
     mThumbnail = static_cast<GLubyte*>(NULL);
 }
@@ -59,6 +64,7 @@ Map::~Map()
 
 void Map::AddKeyFrame(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     if(mspKeyFrames.empty()){
         cout << "First KF:" << pKF->mnId << "; Map init KF:" << mnInitKFid << endl;
@@ -79,24 +85,28 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 
 void Map::AddMapPoint(MapPoint *pMP)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     mspMapPoints.insert(pMP);
 }
 
 void Map::SetImuInitialized()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     mbImuInitialized = true;
 }
 
 bool Map::isImuInitialized()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     return mbImuInitialized;
 }
 
 void Map::EraseMapPoint(MapPoint *pMP)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     mspMapPoints.erase(pMP);
 
@@ -106,6 +116,7 @@ void Map::EraseMapPoint(MapPoint *pMP)
 
 void Map::EraseKeyFrame(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     mspKeyFrames.erase(pKF);
     if(mspKeyFrames.size()>0)
@@ -128,6 +139,7 @@ void Map::EraseKeyFrame(KeyFrame *pKF)
 
 void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMap);
     mvpReferenceMapPoints = vpMPs;
 }

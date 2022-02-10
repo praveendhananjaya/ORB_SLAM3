@@ -27,6 +27,8 @@
 
 #include<mutex>
 #include<thread>
+#include "prof.h"
+#include "profTime.h"
 
 
 namespace ORB_SLAM3
@@ -38,6 +40,7 @@ LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pV
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0), mnLoopNumCoincidences(0), mnMergeNumCoincidences(0),
     mbLoopDetected(false), mbMergeDetected(false), mnLoopNumNotFound(0), mnMergeNumNotFound(0), mbActiveLC(bActiveLC)
 {
+    PROFILE_FUNCTION();
     mnCovisibilityConsistencyTh = 3;
     mpLastCurrentKF = static_cast<KeyFrame*>(NULL);
 
@@ -89,6 +92,7 @@ void LoopClosing::SetLocalMapper(LocalMapping *pLocalMapper)
 
 void LoopClosing::Run()
 {
+    PROFILE_FUNCTION();
     mbFinished =false;
 
     while(1)
@@ -310,6 +314,7 @@ void LoopClosing::Run()
 
 void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexLoopQueue);
     if(pKF->mnId!=0)
         mlpLoopKeyFrameQueue.push_back(pKF);
@@ -317,12 +322,14 @@ void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
 
 bool LoopClosing::CheckNewKeyFrames()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexLoopQueue);
     return(!mlpLoopKeyFrameQueue.empty());
 }
 
 bool LoopClosing::NewDetectCommonRegions()
 {
+    PROFILE_FUNCTION();
     // To deactivate placerecognition. No loopclosing nor merging will be performed
     if(!mbActiveLC)
         return false;
@@ -535,6 +542,7 @@ bool LoopClosing::NewDetectCommonRegions()
 bool LoopClosing::DetectAndReffineSim3FromLastKF(KeyFrame* pCurrentKF, KeyFrame* pMatchedKF, g2o::Sim3 &gScw, int &nNumProjMatches,
                                                  std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs)
 {
+    PROFILE_FUNCTION();
     set<MapPoint*> spAlreadyMatchedMPs;
     nNumProjMatches = FindMatchesByProjection(pCurrentKF, pMatchedKF, gScw, spAlreadyMatchedMPs, vpMPs, vpMatchedMPs);
 
@@ -578,6 +586,7 @@ bool LoopClosing::DetectAndReffineSim3FromLastKF(KeyFrame* pCurrentKF, KeyFrame*
 bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, KeyFrame* &pMatchedKF2, KeyFrame* &pLastCurrentKF, g2o::Sim3 &g2oScw,
                                              int &nNumCoincidences, std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs)
 {
+    PROFILE_FUNCTION();
     int nBoWMatches = 20;
     int nBoWInliers = 15;
     int nSim3Inliers = 20;
@@ -898,6 +907,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 bool LoopClosing::DetectCommonRegionsFromLastKF(KeyFrame* pCurrentKF, KeyFrame* pMatchedKF, g2o::Sim3 &gScw, int &nNumProjMatches,
                                                 std::vector<MapPoint*> &vpMPs, std::vector<MapPoint*> &vpMatchedMPs)
 {
+    PROFILE_FUNCTION();
     set<MapPoint*> spAlreadyMatchedMPs(vpMatchedMPs.begin(), vpMatchedMPs.end());
     nNumProjMatches = FindMatchesByProjection(pCurrentKF, pMatchedKF, gScw, spAlreadyMatchedMPs, vpMPs, vpMatchedMPs);
 
@@ -914,6 +924,7 @@ int LoopClosing::FindMatchesByProjection(KeyFrame* pCurrentKF, KeyFrame* pMatche
                                          set<MapPoint*> &spMatchedMPinOrigin, vector<MapPoint*> &vpMapPoints,
                                          vector<MapPoint*> &vpMatchedMapPoints)
 {
+    PROFILE_FUNCTION();
     int nNumCovisibles = 10;
     vector<KeyFrame*> vpCovKFm = pMatchedKFw->GetBestCovisibilityKeyFrames(nNumCovisibles);
     int nInitialCov = vpCovKFm.size();
@@ -968,6 +979,7 @@ int LoopClosing::FindMatchesByProjection(KeyFrame* pCurrentKF, KeyFrame* pMatche
 
 void LoopClosing::CorrectLoop()
 {
+    PROFILE_FUNCTION();
     //cout << "Loop detected!" << endl;
 
     // Send a stop signal to Local Mapping
@@ -1214,6 +1226,7 @@ void LoopClosing::CorrectLoop()
 
 void LoopClosing::MergeLocal()
 {
+    PROFILE_FUNCTION();
     int numTemporalKFs = 25; //Temporal KFs in the local window if the map is inertial.
 
     //Relationship to rebuild the essential graph, it is used two times, first in the local window and later in the rest of the map
@@ -1782,6 +1795,7 @@ void LoopClosing::MergeLocal()
 
 void LoopClosing::MergeLocal2()
 {
+    PROFILE_FUNCTION();
     //cout << "Merge detected!!!!" << endl;
 
     int numTemporalKFs = 11; //TODO (set by parameter): Temporal KFs in the local window if the map is inertial.
@@ -2064,6 +2078,7 @@ void LoopClosing::MergeLocal2()
 
 void LoopClosing::CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &spKFsMap2)
 {
+    PROFILE_FUNCTION();
     cout << "----------------------" << endl;
     for(KeyFrame* pKFi1 : spKFsMap1)
     {
@@ -2114,6 +2129,7 @@ void LoopClosing::CheckObservations(set<KeyFrame*> &spKFsMap1, set<KeyFrame*> &s
 
 void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, vector<MapPoint*> &vpMapPoints)
 {
+    PROFILE_FUNCTION();
     ORBmatcher matcher(0.8);
 
     int total_replaces = 0;
@@ -2156,6 +2172,7 @@ void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap, vector
 
 void LoopClosing::SearchAndFuse(const vector<KeyFrame*> &vConectedKFs, vector<MapPoint*> &vpMapPoints)
 {
+    PROFILE_FUNCTION();
     ORBmatcher matcher(0.8);
 
     int total_replaces = 0;
@@ -2199,6 +2216,7 @@ void LoopClosing::SearchAndFuse(const vector<KeyFrame*> &vConectedKFs, vector<Ma
 
 void LoopClosing::RequestReset()
 {
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexReset);
         mbResetRequested = true;
@@ -2217,6 +2235,7 @@ void LoopClosing::RequestReset()
 
 void LoopClosing::RequestResetActiveMap(Map *pMap)
 {
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexReset);
         mbResetActiveMapRequested = true;
@@ -2236,6 +2255,7 @@ void LoopClosing::RequestResetActiveMap(Map *pMap)
 
 void LoopClosing::ResetIfRequested()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexReset);
     if(mbResetRequested)
     {
@@ -2266,7 +2286,8 @@ void LoopClosing::ResetIfRequested()
 }
 
 void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoopKF)
-{  
+{
+    PROFILE_FUNCTION();
     Verbose::PrintMess("Starting Global Bundle Adjustment", Verbose::VERBOSITY_NORMAL);
 
 #ifdef REGISTER_TIMES
@@ -2512,6 +2533,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
 
 void LoopClosing::RequestFinish()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFinish);
     // cout << "LC: Finish requested" << endl;
     mbFinishRequested = true;
@@ -2519,6 +2541,7 @@ void LoopClosing::RequestFinish()
 
 bool LoopClosing::CheckFinish()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFinish);
     return mbFinishRequested;
 }

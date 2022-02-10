@@ -20,6 +20,8 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include "profTime.h"
+#include "prof.h"
 
 #include<opencv2/core/core.hpp>
 
@@ -32,6 +34,8 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
 
 int main(int argc, char **argv)
 {
+    prof::Get().BeginSession("Profile");
+
     if(argc != 4)
     {
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
@@ -42,6 +46,7 @@ int main(int argc, char **argv)
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
     string strFile = string(argv[3])+"/rgb.txt";
+
     LoadImages(strFile, vstrImageFilenames, vTimestamps);
 
     int nImages = vstrImageFilenames.size();
@@ -150,12 +155,13 @@ int main(int argc, char **argv)
 
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
-
+    prof::Get().EndSession();
     return 0;
 }
 
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
 {
+    PROFILE_FUNCTION();
     ifstream f;
     f.open(strFile.c_str());
 

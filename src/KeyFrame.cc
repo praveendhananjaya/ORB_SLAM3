@@ -20,6 +20,9 @@
 #include "Converter.h"
 #include "ImuTypes.h"
 #include<mutex>
+#include "prof.h"
+#include "profTime.h"
+
 
 namespace ORB_SLAM3
 {
@@ -39,7 +42,7 @@ KeyFrame::KeyFrame():
         mbToBeErased(false), mbBad(false), mHalfBaseline(0), mbCurrentPlaceRecognition(false), mnMergeCorrectedForKF(0),
         NLeft(0),NRight(0), mnNumberOfOpt(0), mbHasVelocity(false)
 {
-
+    PROFILE_FUNCTION();
 }
 
 KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
@@ -61,6 +64,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     mvLeftToRightMatch(F.mvLeftToRightMatch),mvRightToLeftMatch(F.mvRightToLeftMatch), mTlr(F.GetRelativePoseTlr()),
     mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false)
 {
+    PROFILE_FUNCTION();
     mnId=nNextId++;
 
     mGrid.resize(mnGridCols);
@@ -97,6 +101,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
 
 void KeyFrame::ComputeBoW()
 {
+    PROFILE_FUNCTION();
     if(mBowVec.empty() || mFeatVec.empty())
     {
         vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
@@ -108,6 +113,7 @@ void KeyFrame::ComputeBoW()
 
 void KeyFrame::SetPose(const Sophus::SE3f &Tcw)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexPose);
 
     mTcw = Tcw;
@@ -123,6 +129,7 @@ void KeyFrame::SetPose(const Sophus::SE3f &Tcw)
 
 void KeyFrame::SetVelocity(const Eigen::Vector3f &Vw)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexPose);
     mVw = Vw;
     mbHasVelocity = true;
@@ -188,6 +195,7 @@ bool KeyFrame::isVelocitySet()
 
 void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight)
 {
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexConnections);
         if(!mConnectedKeyFrameWeights.count(pKF))
@@ -203,6 +211,7 @@ void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight)
 
 void KeyFrame::UpdateBestCovisibles()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
     vector<pair<int,KeyFrame*> > vPairs;
     vPairs.reserve(mConnectedKeyFrameWeights.size());
@@ -227,6 +236,7 @@ void KeyFrame::UpdateBestCovisibles()
 
 set<KeyFrame*> KeyFrame::GetConnectedKeyFrames()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
     set<KeyFrame*> s;
     for(map<KeyFrame*,int>::iterator mit=mConnectedKeyFrameWeights.begin();mit!=mConnectedKeyFrameWeights.end();mit++)
@@ -236,12 +246,14 @@ set<KeyFrame*> KeyFrame::GetConnectedKeyFrames()
 
 vector<KeyFrame*> KeyFrame::GetVectorCovisibleKeyFrames()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
     return mvpOrderedConnectedKeyFrames;
 }
 
 vector<KeyFrame*> KeyFrame::GetBestCovisibilityKeyFrames(const int &N)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
     if((int)mvpOrderedConnectedKeyFrames.size()<N)
         return mvpOrderedConnectedKeyFrames;
@@ -252,6 +264,7 @@ vector<KeyFrame*> KeyFrame::GetBestCovisibilityKeyFrames(const int &N)
 
 vector<KeyFrame*> KeyFrame::GetCovisiblesByWeight(const int &w)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
 
     if(mvpOrderedConnectedKeyFrames.empty())
@@ -274,6 +287,7 @@ vector<KeyFrame*> KeyFrame::GetCovisiblesByWeight(const int &w)
 
 int KeyFrame::GetWeight(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexConnections);
     if(mConnectedKeyFrameWeights.count(pKF))
         return mConnectedKeyFrameWeights[pKF];
@@ -283,6 +297,7 @@ int KeyFrame::GetWeight(KeyFrame *pKF)
 
 int KeyFrame::GetNumberMPs()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     int numberMPs = 0;
     for(size_t i=0, iend=mvpMapPoints.size(); i<iend; i++)
@@ -308,6 +323,7 @@ void KeyFrame::EraseMapPointMatch(const int &idx)
 
 void KeyFrame::EraseMapPointMatch(MapPoint* pMP)
 {
+    PROFILE_FUNCTION();
     tuple<size_t,size_t> indexes = pMP->GetIndexInKeyFrame(this);
     size_t leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
     if(leftIndex != -1)
@@ -324,6 +340,7 @@ void KeyFrame::ReplaceMapPointMatch(const int &idx, MapPoint* pMP)
 
 set<MapPoint*> KeyFrame::GetMapPoints()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     set<MapPoint*> s;
     for(size_t i=0, iend=mvpMapPoints.size(); i<iend; i++)
@@ -339,6 +356,7 @@ set<MapPoint*> KeyFrame::GetMapPoints()
 
 int KeyFrame::TrackedMapPoints(const int &minObs)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
 
     int nPoints=0;
@@ -378,6 +396,7 @@ MapPoint* KeyFrame::GetMapPoint(const size_t &idx)
 
 void KeyFrame::UpdateConnections(bool upParent)
 {
+    PROFILE_FUNCTION();
     map<KeyFrame*,int> KFcounter;
 
     vector<MapPoint*> vpMP;
@@ -487,6 +506,7 @@ void KeyFrame::EraseChild(KeyFrame *pKF)
 
 void KeyFrame::ChangeParent(KeyFrame *pKF)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lockCon(mMutexConnections);
     if(pKF == this)
     {
@@ -572,6 +592,7 @@ void KeyFrame::SetErase()
 
 void KeyFrame::SetBadFlag()
 {
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexConnections);
         if(mnId==mpMap->GetInitKFid())
@@ -686,6 +707,7 @@ bool KeyFrame::isBad()
 
 void KeyFrame::EraseConnection(KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     bool bUpdate = false;
     {
         unique_lock<mutex> lock(mMutexConnections);
@@ -703,6 +725,7 @@ void KeyFrame::EraseConnection(KeyFrame* pKF)
 
 vector<size_t> KeyFrame::GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight) const
 {
+    PROFILE_FUNCTION();
     vector<size_t> vIndices;
     vIndices.reserve(N);
 
@@ -754,6 +777,7 @@ bool KeyFrame::IsInImage(const float &x, const float &y) const
 
 bool KeyFrame::UnprojectStereo(int i, Eigen::Vector3f &x3D)
 {
+    PROFILE_FUNCTION();
     const float z = mvDepth[i];
     if(z>0)
     {
@@ -773,6 +797,7 @@ bool KeyFrame::UnprojectStereo(int i, Eigen::Vector3f &x3D)
 
 float KeyFrame::ComputeSceneMedianDepth(const int q)
 {
+    PROFILE_FUNCTION();
     if(N==0)
         return -1.0;
 
@@ -808,6 +833,7 @@ float KeyFrame::ComputeSceneMedianDepth(const int q)
 
 void KeyFrame::SetNewBias(const IMU::Bias &b)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexPose);
     mImuBias = b;
     if(mpImuPreintegrated)
@@ -846,6 +872,7 @@ void KeyFrame::UpdateMap(Map* pMap)
 
 void KeyFrame::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricCamera*>& spCam)
 {
+    PROFILE_FUNCTION();
     // Save the id of each MapPoint in this KF, there can be null pointer in the vector
     mvBackupMapPointsId.clear();
     mvBackupMapPointsId.reserve(N);
@@ -921,7 +948,7 @@ void KeyFrame::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricC
 
 void KeyFrame::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid, map<unsigned int, GeometricCamera*>& mpCamId){
     // Rebuild the empty variables
-
+    PROFILE_FUNCTION();
     // Pose
     SetPose(mTcw);
 
@@ -1010,7 +1037,7 @@ void KeyFrame::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsi
 
 bool KeyFrame::ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v)
 {
-
+    PROFILE_FUNCTION();
     // 3D in absolute coordinates
     Eigen::Vector3f P = pMP->GetWorldPos();
 
@@ -1073,7 +1100,7 @@ bool KeyFrame::ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, flo
 
 bool KeyFrame::ProjectPointUnDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float &v)
 {
-
+    PROFILE_FUNCTION();
     // 3D in absolute coordinates
     Eigen::Vector3f P = pMP->GetWorldPos();
 

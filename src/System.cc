@@ -32,6 +32,8 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -43,6 +45,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
     mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
 {
+    PROFILE_FUNCTION();
     // Output welcome message
     cout << endl <<
     "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
@@ -70,6 +73,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
+
        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
        exit(-1);
     }
@@ -243,6 +247,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
+    PROFILE_FUNCTION();
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
         cerr << "ERROR: you called TrackStereo but input sensor was not set to Stereo nor Stereo-Inertial." << endl;
@@ -327,6 +332,7 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
 
 Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
+    PROFILE_FUNCTION();
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
         cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
@@ -398,7 +404,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 
 Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
-
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexReset);
         if(mbShutDown)
@@ -477,18 +483,21 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
 
 void System::ActivateLocalizationMode()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMode);
     mbActivateLocalizationMode = true;
 }
 
 void System::DeactivateLocalizationMode()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexMode);
     mbDeactivateLocalizationMode = true;
 }
 
 bool System::MapChanged()
 {
+    PROFILE_FUNCTION();
     static int n=0;
     int curn = mpAtlas->GetLastBigChangeIdx();
     if(n<curn)
@@ -502,18 +511,21 @@ bool System::MapChanged()
 
 void System::Reset()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexReset);
     mbReset = true;
 }
 
 void System::ResetActiveMap()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexReset);
     mbResetActiveMap = true;
 }
 
 void System::Shutdown()
 {
+    PROFILE_FUNCTION();
     {
         unique_lock<mutex> lock(mMutexReset);
         mbShutDown = true;
@@ -568,6 +580,7 @@ bool System::isShutDown() {
 
 void System::SaveTrajectoryTUM(const string &filename)
 {
+    PROFILE_FUNCTION();
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
     if(mSensor==MONOCULAR)
     {
@@ -628,6 +641,7 @@ void System::SaveTrajectoryTUM(const string &filename)
 
 void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 {
+    PROFILE_FUNCTION();
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
     vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
@@ -661,7 +675,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 
 void System::SaveTrajectoryEuRoC(const string &filename)
 {
-
+    PROFILE_FUNCTION();
     cout << endl << "Saving trajectory to " << filename << " ..." << endl;
     /*if(mSensor==MONOCULAR)
     {
@@ -778,7 +792,7 @@ void System::SaveTrajectoryEuRoC(const string &filename)
 
 void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
 {
-
+    PROFILE_FUNCTION();
     cout << endl << "Saving trajectory of map " << pMap->GetId() << " to " << filename << " ..." << endl;
     /*if(mSensor==MONOCULAR)
     {
@@ -1056,6 +1070,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
 
 void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
 {
+    PROFILE_FUNCTION();
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
@@ -1114,6 +1129,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
 
 void System::SaveKeyFrameTrajectoryEuRoC(const string &filename, Map* pMap)
 {
+    PROFILE_FUNCTION();
     cout << endl << "Saving keyframe trajectory of map " << pMap->GetId() << " to " << filename << " ..." << endl;
 
     vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
@@ -1205,6 +1221,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename, Map* pMap)
 
 void System::SaveTrajectoryKITTI(const string &filename)
 {
+    PROFILE_FUNCTION();
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
     if(mSensor==MONOCULAR)
     {
@@ -1264,6 +1281,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
 
 void System::SaveDebugData(const int &initIdx)
 {
+    PROFILE_FUNCTION();
     // 0. Save initialization trajectory
     SaveTrajectoryEuRoC("init_FrameTrajectoy_" +to_string(mpLocalMapper->mInitSect)+ "_" + to_string(initIdx)+".txt");
 
@@ -1320,24 +1338,28 @@ void System::SaveDebugData(const int &initIdx)
 
 int System::GetTrackingState()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexState);
     return mTrackingState;
 }
 
 vector<MapPoint*> System::GetTrackedMapPoints()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexState);
     return mTrackedMapPoints;
 }
 
 vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexState);
     return mTrackedKeyPointsUn;
 }
 
 double System::GetTimeFromIMUInit()
 {
+    PROFILE_FUNCTION();
     double aux = mpLocalMapper->GetCurrKFTime()-mpLocalMapper->mFirstTs;
     if ((aux>0.) && mpAtlas->isImuInitialized())
         return mpLocalMapper->GetCurrKFTime()-mpLocalMapper->mFirstTs;
@@ -1347,6 +1369,7 @@ double System::GetTimeFromIMUInit()
 
 bool System::isLost()
 {
+    PROFILE_FUNCTION();
     if (!mpAtlas->isImuInitialized())
         return false;
     else
@@ -1361,11 +1384,13 @@ bool System::isLost()
 
 bool System::isFinished()
 {
+    PROFILE_FUNCTION();
     return (GetTimeFromIMUInit()>0.1);
 }
 
 void System::ChangeDataset()
 {
+    PROFILE_FUNCTION();
     if(mpAtlas->GetCurrentMap()->KeyFramesInMap() < 12)
     {
         mpTracker->ResetActiveMap();
@@ -1380,6 +1405,7 @@ void System::ChangeDataset()
 
 float System::GetImageScale()
 {
+    PROFILE_FUNCTION();
     return mpTracker->GetImageScale();
 }
 
@@ -1403,6 +1429,7 @@ void System::InsertTrackTime(double& time)
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {
+        PROFILE_FUNCTION();
         //clock_t start = clock();
 
         // Save the current session
@@ -1444,6 +1471,7 @@ void System::SaveAtlas(int type){
 
 bool System::LoadAtlas(int type)
 {
+    PROFILE_FUNCTION();
     string strFileVoc, strVocChecksum;
     bool isRead = false;
 
@@ -1507,6 +1535,7 @@ bool System::LoadAtlas(int type)
 
 string System::CalculateCheckSum(string filename, int type)
 {
+    PROFILE_FUNCTION();
     string checksum = "";
 
     unsigned char c[MD5_DIGEST_LENGTH];

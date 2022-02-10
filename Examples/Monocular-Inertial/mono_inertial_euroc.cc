@@ -24,10 +24,14 @@
 #include <ctime>
 #include <sstream>
 
+#include "prof.h"
+#include "profTime.h"
+
 #include<opencv2/core/core.hpp>
 
 #include<System.h>
 #include "ImuTypes.h"
+
 
 using namespace std;
 
@@ -39,7 +43,7 @@ void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::P
 double ttrack_tot = 0;
 int main(int argc, char *argv[])
 {
-
+    prof::Get().BeginSession("Profile");
     if(argc < 5)
     {
         cerr << endl << "Usage: ./mono_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) " << endl;
@@ -245,13 +249,14 @@ int main(int argc, char *argv[])
         SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
         SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
     }
-
+    prof::Get().EndSession();
     return 0;
 }
 
 void LoadImages(const string &strImagePath, const string &strPathTimes,
                 vector<string> &vstrImages, vector<double> &vTimeStamps)
 {
+    PROFILE_FUNCTION();
     ifstream fTimes;
     fTimes.open(strPathTimes.c_str());
     vTimeStamps.reserve(5000);
@@ -275,6 +280,7 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 
 void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro)
 {
+    PROFILE_FUNCTION();
     ifstream fImu;
     fImu.open(strImuPath.c_str());
     vTimeStamps.reserve(5000);

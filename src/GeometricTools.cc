@@ -19,12 +19,15 @@
 #include "GeometricTools.h"
 
 #include "KeyFrame.h"
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
 
 Eigen::Matrix3f GeometricTools::ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2)
 {
+    PROFILE_FUNCTION();
     Sophus::SE3<float> Tc1w = pKF1->GetPose();
     Sophus::Matrix3<float> Rc1w = Tc1w.rotationMatrix();
     Sophus::SE3<float>::TranslationMember tc1w = Tc1w.translation();
@@ -46,6 +49,7 @@ Eigen::Matrix3f GeometricTools::ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2)
 
 bool GeometricTools::Triangulate(Eigen::Vector3f &x_c1, Eigen::Vector3f &x_c2,Eigen::Matrix<float,3,4> &Tc1w ,Eigen::Matrix<float,3,4> &Tc2w , Eigen::Vector3f &x3D)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix4f A;
     A.block<1,4>(0,0) = x_c1(0) * Tc1w.block<1,4>(2,0) - Tc1w.block<1,4>(0,0);
     A.block<1,4>(1,0) = x_c1(1) * Tc1w.block<1,4>(2,0) - Tc1w.block<1,4>(1,0);

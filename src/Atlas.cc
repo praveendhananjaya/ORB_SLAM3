@@ -22,22 +22,28 @@
 #include "GeometricCamera.h"
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
+#include "prof.h"
+#include "profTime.h"
+
 
 namespace ORB_SLAM3
 {
 
 Atlas::Atlas(){
+    PROFILE_FUNCTION();
     mpCurrentMap = static_cast<Map*>(NULL);
 }
 
 Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
 {
+    PROFILE_FUNCTION();
     mpCurrentMap = static_cast<Map*>(NULL);
     CreateNewMap();
 }
 
 Atlas::~Atlas()
 {
+    PROFILE_FUNCTION();
     for(std::set<Map*>::iterator it = mspMaps.begin(), end = mspMaps.end(); it != end;)
     {
         Map* pMi = *it;
@@ -57,6 +63,7 @@ Atlas::~Atlas()
 
 void Atlas::CreateNewMap()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAtlas);
     cout << "Creation of new map with id: " << Map::nNextId << endl;
     if(mpCurrentMap){
@@ -78,6 +85,7 @@ void Atlas::CreateNewMap()
 
 void Atlas::ChangeMap(Map* pMap)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAtlas);
     cout << "Change to map with id: " << pMap->GetId() << endl;
     if(mpCurrentMap){
@@ -90,24 +98,28 @@ void Atlas::ChangeMap(Map* pMap)
 
 unsigned long int Atlas::GetLastInitKFid()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAtlas);
     return mnLastInitKFidMap;
 }
 
 void Atlas::SetViewer(Viewer* pViewer)
 {
+    PROFILE_FUNCTION();
     mpViewer = pViewer;
     mHasViewer = true;
 }
 
 void Atlas::AddKeyFrame(KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     Map* pMapKF = pKF->GetMap();
     pMapKF->AddKeyFrame(pKF);
 }
 
 void Atlas::AddMapPoint(MapPoint* pMP)
 {
+    PROFILE_FUNCTION();
     Map* pMapMP = pMP->GetMap();
     pMapMP->AddMapPoint(pMP);
 }
@@ -115,6 +127,7 @@ void Atlas::AddMapPoint(MapPoint* pMP)
 GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
 {
     //Check if the camera already exists
+    PROFILE_FUNCTION();
     bool bAlreadyInMap = false;
     int index_cam = -1;
     for(size_t i=0; i < mvpCameras.size(); ++i)
@@ -155,17 +168,20 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
 
 std::vector<GeometricCamera*> Atlas::GetAllCameras()
 {
+    //PROFILE_FUNCTION();
     return mvpCameras;
 }
 
 void Atlas::SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs)
 {
+    //PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexAtlas);
     mpCurrentMap->SetReferenceMapPoints(vpMPs);
 }
 
 void Atlas::InformNewBigChange()
 {
+
     unique_lock<mutex> lock(mMutexAtlas);
     mpCurrentMap->InformNewBigChange();
 }

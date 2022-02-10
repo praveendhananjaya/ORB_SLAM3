@@ -24,6 +24,8 @@
 #include "Thirdparty/DBoW2/DUtils/Random.h"
 
 #include<thread>
+#include "prof.h"
+#include "profTime.h"
 
 
 using namespace std;
@@ -31,6 +33,7 @@ namespace ORB_SLAM3
 {
     TwoViewReconstruction::TwoViewReconstruction(const Eigen::Matrix3f& k, float sigma, int iterations)
     {
+        PROFILE_FUNCTION();
         mK = k;
 
         mSigma = sigma;
@@ -41,6 +44,7 @@ namespace ORB_SLAM3
     bool TwoViewReconstruction::Reconstruct(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const vector<int> &vMatches12,
                                              Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated)
     {
+        PROFILE_FUNCTION();
         mvKeys1.clear();
         mvKeys2.clear();
 
@@ -130,6 +134,7 @@ namespace ORB_SLAM3
 
     void TwoViewReconstruction::FindHomography(vector<bool> &vbMatchesInliers, float &score, Eigen::Matrix3f &H21)
     {
+        PROFILE_FUNCTION();
         // Number of putative matches
         const int N = mvMatches12.size();
 
@@ -181,6 +186,7 @@ namespace ORB_SLAM3
 
     void TwoViewReconstruction::FindFundamental(vector<bool> &vbMatchesInliers, float &score, Eigen::Matrix3f &F21)
     {
+        PROFILE_FUNCTION();
         // Number of putative matches
         const int N = vbMatchesInliers.size();
 
@@ -231,6 +237,7 @@ namespace ORB_SLAM3
 
     Eigen::Matrix3f TwoViewReconstruction::ComputeH21(const vector<cv::Point2f> &vP1, const vector<cv::Point2f> &vP2)
     {
+        PROFILE_FUNCTION();
         const int N = vP1.size();
 
         Eigen::MatrixXf A(2*N, 9);
@@ -273,6 +280,7 @@ namespace ORB_SLAM3
 
     Eigen::Matrix3f TwoViewReconstruction::ComputeF21(const vector<cv::Point2f> &vP1,const vector<cv::Point2f> &vP2)
     {
+        PROFILE_FUNCTION();
         const int N = vP1.size();
 
         Eigen::MatrixXf A(N, 9);
@@ -309,6 +317,7 @@ namespace ORB_SLAM3
 
     float TwoViewReconstruction::CheckHomography(const Eigen::Matrix3f &H21, const Eigen::Matrix3f &H12, vector<bool> &vbMatchesInliers, float sigma)
     {
+        PROFILE_FUNCTION();
         const int N = mvMatches12.size();
 
         const float h11 = H21(0,0);
@@ -394,6 +403,7 @@ namespace ORB_SLAM3
 
     float TwoViewReconstruction::CheckFundamental(const Eigen::Matrix3f &F21, vector<bool> &vbMatchesInliers, float sigma)
     {
+        PROFILE_FUNCTION();
         const int N = mvMatches12.size();
 
         const float f11 = F21(0,0);
@@ -475,6 +485,7 @@ namespace ORB_SLAM3
     bool TwoViewReconstruction::ReconstructF(vector<bool> &vbMatchesInliers, Eigen::Matrix3f &F21, Eigen::Matrix3f &K,
                                              Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
     {
+        PROFILE_FUNCTION();
         int N=0;
         for(size_t i=0, iend = vbMatchesInliers.size() ; i<iend; i++)
             if(vbMatchesInliers[i])
@@ -571,6 +582,7 @@ namespace ORB_SLAM3
     bool TwoViewReconstruction::ReconstructH(vector<bool> &vbMatchesInliers, Eigen::Matrix3f &H21, Eigen::Matrix3f &K,
                                              Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
     {
+        PROFILE_FUNCTION();
         int N=0;
         for(size_t i=0, iend = vbMatchesInliers.size() ; i<iend; i++)
             if(vbMatchesInliers[i])
@@ -736,6 +748,7 @@ namespace ORB_SLAM3
 
     void TwoViewReconstruction::Normalize(const vector<cv::KeyPoint> &vKeys, vector<cv::Point2f> &vNormalizedPoints, Eigen::Matrix3f &T)
     {
+        PROFILE_FUNCTION();
         float meanX = 0;
         float meanY = 0;
         const int N = vKeys.size();
@@ -787,6 +800,7 @@ namespace ORB_SLAM3
                                        const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
                                        const Eigen::Matrix3f &K, vector<cv::Point3f> &vP3D, float th2, vector<bool> &vbGood, float &parallax)
     {
+        PROFILE_FUNCTION();
         // Calibration parameters
         const float fx = K(0,0);
         const float fy = K(1,1);
@@ -902,7 +916,7 @@ namespace ORB_SLAM3
 
     void TwoViewReconstruction::DecomposeE(const Eigen::Matrix3f &E, Eigen::Matrix3f &R1, Eigen::Matrix3f &R2, Eigen::Vector3f &t)
     {
-
+        PROFILE_FUNCTION();
         Eigen::JacobiSVD<Eigen::Matrix3f> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
         Eigen::Matrix3f U = svd.matrixU();

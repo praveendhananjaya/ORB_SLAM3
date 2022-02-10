@@ -18,12 +18,15 @@
 
 
 #include "Config.h"
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
 
 bool ConfigParser::ParseConfigFile(std::string &strConfigFile)
 {
+    PROFILE_FUNCTION();
     return true;
 }
 

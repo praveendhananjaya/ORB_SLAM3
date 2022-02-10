@@ -20,6 +20,8 @@
 #include "ORBmatcher.h"
 
 #include<mutex>
+#include "prof.h"
+#include "profTime.h"
 
 namespace ORB_SLAM3
 {
@@ -33,6 +35,7 @@ MapPoint::MapPoint():
     mnCorrectedReference(0), mnBAGlobalForKF(0), mnVisible(1), mnFound(1), mbBad(false),
     mpReplaced(static_cast<MapPoint*>(NULL))
 {
+    PROFILE_FUNCTION();
     mpReplaced = static_cast<MapPoint*>(NULL);
 }
 
@@ -43,6 +46,7 @@ MapPoint::MapPoint(const Eigen::Vector3f &Pos, KeyFrame *pRefKF, Map* pMap):
     mpReplaced(static_cast<MapPoint*>(NULL)), mfMinDistance(0), mfMaxDistance(0), mpMap(pMap),
     mnOriginMapId(pMap->GetId())
 {
+    PROFILE_FUNCTION();
     SetWorldPos(Pos);
 
     mNormalVector.setZero();
@@ -62,6 +66,7 @@ MapPoint::MapPoint(const double invDepth, cv::Point2f uv_init, KeyFrame* pRefKF,
     mpReplaced(static_cast<MapPoint*>(NULL)), mfMinDistance(0), mfMaxDistance(0), mpMap(pMap),
     mnOriginMapId(pMap->GetId())
 {
+    PROFILE_FUNCTION();
     mInvDepth=invDepth;
     mInitU=(double)uv_init.x;
     mInitV=(double)uv_init.y;
@@ -81,6 +86,7 @@ MapPoint::MapPoint(const Eigen::Vector3f &Pos, Map* pMap, Frame* pFrame, const i
     mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(static_cast<KeyFrame*>(NULL)), mnVisible(1),
     mnFound(1), mbBad(false), mpReplaced(NULL), mpMap(pMap), mnOriginMapId(pMap->GetId())
 {
+    PROFILE_FUNCTION();
     SetWorldPos(Pos);
 
     Eigen::Vector3f Ow;
@@ -116,6 +122,7 @@ MapPoint::MapPoint(const Eigen::Vector3f &Pos, Map* pMap, Frame* pFrame, const i
 }
 
 void MapPoint::SetWorldPos(const Eigen::Vector3f &Pos) {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock2(mGlobalMutex);
     unique_lock<mutex> lock(mMutexPos);
     mWorldPos = Pos;
@@ -140,6 +147,7 @@ KeyFrame* MapPoint::GetReferenceKeyFrame()
 
 void MapPoint::AddObservation(KeyFrame* pKF, int idx)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     tuple<int,int> indexes;
 
@@ -167,6 +175,7 @@ void MapPoint::AddObservation(KeyFrame* pKF, int idx)
 
 void MapPoint::EraseObservation(KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     bool bBad=false;
     {
         unique_lock<mutex> lock(mMutexFeatures);
@@ -203,18 +212,21 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 
 std::map<KeyFrame*, std::tuple<int,int>>  MapPoint::GetObservations()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     return mObservations;
 }
 
 int MapPoint::Observations()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     return nObs;
 }
 
 void MapPoint::SetBadFlag()
 {
+    PROFILE_FUNCTION();
     map<KeyFrame*, tuple<int,int>> obs;
     {
         unique_lock<mutex> lock1(mMutexFeatures);
@@ -240,6 +252,7 @@ void MapPoint::SetBadFlag()
 
 MapPoint* MapPoint::GetReplaced()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock1(mMutexFeatures);
     unique_lock<mutex> lock2(mMutexPos);
     return mpReplaced;
@@ -247,6 +260,7 @@ MapPoint* MapPoint::GetReplaced()
 
 void MapPoint::Replace(MapPoint* pMP)
 {
+    PROFILE_FUNCTION();
     if(pMP->mnId==this->mnId)
         return;
 
@@ -301,6 +315,7 @@ void MapPoint::Replace(MapPoint* pMP)
 
 bool MapPoint::isBad()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock1(mMutexFeatures,std::defer_lock);
     unique_lock<mutex> lock2(mMutexPos,std::defer_lock);
     lock(lock1, lock2);
@@ -310,24 +325,28 @@ bool MapPoint::isBad()
 
 void MapPoint::IncreaseVisible(int n)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     mnVisible+=n;
 }
 
 void MapPoint::IncreaseFound(int n)
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     mnFound+=n;
 }
 
 float MapPoint::GetFoundRatio()
 {
+    PROFILE_FUNCTION();
     unique_lock<mutex> lock(mMutexFeatures);
     return static_cast<float>(mnFound)/mnVisible;
 }
 
 void MapPoint::ComputeDistinctiveDescriptors()
 {
+    PROFILE_FUNCTION();
     // Retrieve all observed descriptors
     vector<cv::Mat> vDescriptors;
 
@@ -425,6 +444,7 @@ bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
 
 void MapPoint::UpdateNormalAndDepth()
 {
+    PROFILE_FUNCTION();
     map<KeyFrame*,tuple<int,int>> observations;
     KeyFrame* pRefKF;
     Eigen::Vector3f Pos;
@@ -513,6 +533,7 @@ float MapPoint::GetMaxDistanceInvariance()
 
 int MapPoint::PredictScale(const float &currentDist, KeyFrame* pKF)
 {
+    PROFILE_FUNCTION();
     float ratio;
     {
         unique_lock<mutex> lock(mMutexPos);
@@ -530,6 +551,7 @@ int MapPoint::PredictScale(const float &currentDist, KeyFrame* pKF)
 
 int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 {
+    PROFILE_FUNCTION();
     float ratio;
     {
         unique_lock<mutex> lock(mMutexPos);
@@ -547,6 +569,7 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 
 void MapPoint::PrintObservations()
 {
+    PROFILE_FUNCTION();
     cout << "MP_OBS: MP " << mnId << endl;
     for(map<KeyFrame*,tuple<int,int>>::iterator mit=mObservations.begin(), mend=mObservations.end(); mit!=mend; mit++)
     {
@@ -571,6 +594,7 @@ void MapPoint::UpdateMap(Map* pMap)
 
 void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
 {
+    PROFILE_FUNCTION();
     mBackupReplacedId = -1;
     if(mpReplaced && spMP.find(mpReplaced) != spMP.end())
         mBackupReplacedId = mpReplaced->mnId;
@@ -601,6 +625,7 @@ void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
 
 void MapPoint::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid)
 {
+    PROFILE_FUNCTION();
     mpRefKF = mpKFid[mBackupRefKFId];
     if(!mpRefKF)
     {

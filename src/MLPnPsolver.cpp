@@ -49,11 +49,14 @@
 #include "MLPnPsolver.h"
 
 #include <Eigen/Sparse>
+#include "prof.h"
+#include "profTime.h"
 
 
 namespace ORB_SLAM3 {
     MLPnPsolver::MLPnPsolver(const Frame &F, const vector<MapPoint *> &vpMapPointMatches):
             mnInliersi(0), mnIterations(0), mnBestInliers(0), N(0), mpCamera(F.mpCamera){
+        PROFILE_FUNCTION();
         mvpMapPointMatches = vpMapPointMatches;
         mvBearingVecs.reserve(F.mvpMapPoints.size());
         mvP2D.reserve(F.mvpMapPoints.size());
@@ -98,6 +101,7 @@ namespace ORB_SLAM3 {
 
     //RANSAC methods
     bool MLPnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, Eigen::Matrix4f &Tout){
+        PROFILE_FUNCTION();
         Tout.setIdentity();
         bNoMore = false;
 	    vbInliers.clear();
@@ -223,7 +227,8 @@ namespace ORB_SLAM3 {
 	}
 
 	void MLPnPsolver::SetRansacParameters(double probability, int minInliers, int maxIterations, int minSet, float epsilon, float th2){
-		mRansacProb = probability;
+        PROFILE_FUNCTION();
+        mRansacProb = probability;
 	    mRansacMinInliers = minInliers;
 	    mRansacMaxIts = maxIterations;
 	    mRansacEpsilon = epsilon;
@@ -260,6 +265,7 @@ namespace ORB_SLAM3 {
 	}
 
     void MLPnPsolver::CheckInliers(){
+        PROFILE_FUNCTION();
         mnInliersi=0;
 
         for(int i=0; i<N; i++)
@@ -293,6 +299,7 @@ namespace ORB_SLAM3 {
     }
 
     bool MLPnPsolver::Refine(){
+        PROFILE_FUNCTION();
         vector<int> vIndices;
         vIndices.reserve(mvbBestInliers.size());
 
@@ -355,6 +362,7 @@ namespace ORB_SLAM3 {
 	//MLPnP methods
     void MLPnPsolver::computePose(const bearingVectors_t &f, const points_t &p, const cov3_mats_t &covMats,
                                   const std::vector<int> &indices, transformation_t &result) {
+        PROFILE_FUNCTION();
         size_t numberCorrespondences = indices.size();
         assert(numberCorrespondences > 5);
 
@@ -658,6 +666,7 @@ namespace ORB_SLAM3 {
     }
 
     Eigen::Matrix3d MLPnPsolver::rodrigues2rot(const Eigen::Vector3d &omega) {
+        PROFILE_FUNCTION();
         rotation_t R = Eigen::Matrix3d::Identity();
 
         Eigen::Matrix3d skewW;
@@ -675,6 +684,7 @@ namespace ORB_SLAM3 {
     }
 
     Eigen::Vector3d MLPnPsolver::rot2rodrigues(const Eigen::Matrix3d &R) {
+        PROFILE_FUNCTION();
         rodrigues_t omega;
         omega << 0.0, 0.0, 0.0;
 
@@ -693,6 +703,7 @@ namespace ORB_SLAM3 {
 
     void MLPnPsolver::mlpnp_gn(Eigen::VectorXd &x, const points_t &pts, const std::vector<Eigen::MatrixXd> &nullspaces,
                                const Eigen::SparseMatrix<double> Kll, bool use_cov) {
+        PROFILE_FUNCTION();
         const int numObservations = pts.size();
         const int numUnknowns = 6;
         // check redundancy
@@ -760,6 +771,7 @@ namespace ORB_SLAM3 {
     void MLPnPsolver::mlpnp_residuals_and_jacs(const Eigen::VectorXd &x, const points_t &pts,
                                                const std::vector<Eigen::MatrixXd> &nullspaces, Eigen::VectorXd &r,
                                                Eigen::MatrixXd &fjac, bool getJacs) {
+        PROFILE_FUNCTION();
         rodrigues_t w(x[0], x[1], x[2]);
         translation_t T(x[3], x[4], x[5]);
 
@@ -808,6 +820,7 @@ namespace ORB_SLAM3 {
     void MLPnPsolver::mlpnpJacs(const point_t& pt, const Eigen::Vector3d& nullspace_r,
             					const Eigen::Vector3d& nullspace_s, const rodrigues_t& w,
             					const translation_t& t, Eigen::MatrixXd& jacs){
+        PROFILE_FUNCTION();
     	double r1 = nullspace_r[0];
 		double r2 = nullspace_r[1];
 		double r3 = nullspace_r[2];

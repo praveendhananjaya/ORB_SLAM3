@@ -27,6 +27,9 @@
 #include "ORBmatcher.h"
 
 #include "Thirdparty/DBoW2/DUtils/Random.h"
+#include "prof.h"
+#include "profTime.h"
+
 
 namespace ORB_SLAM3
 {
@@ -37,6 +40,7 @@ Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> 
     mnIterations(0), mnBestInliers(0), mbFixScale(bFixScale),
     pCamera1(pKF1->mpCamera), pCamera2(pKF2->mpCamera)
 {
+    PROFILE_FUNCTION();
     bool bDifferentKFs = false;
     if(vpKeyFrameMatchedMP.empty())
     {
@@ -122,6 +126,7 @@ Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> 
 
 void Sim3Solver::SetRansacParameters(double probability, int minInliers, int maxIterations)
 {
+    PROFILE_FUNCTION();
     mRansacProb = probability;
     mRansacMinInliers = minInliers;
     mRansacMaxIts = maxIterations;    
@@ -148,6 +153,7 @@ void Sim3Solver::SetRansacParameters(double probability, int minInliers, int max
 
 Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers)
 {
+    PROFILE_FUNCTION();
     bNoMore = false;
     vbInliers = vector<bool>(mN1,false);
     nInliers=0;
@@ -217,6 +223,7 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
 
 Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge)
 {
+    PROFILE_FUNCTION();
     bNoMore = false;
     bConverge = false;
     vbInliers = vector<bool>(mN1,false);
@@ -295,12 +302,14 @@ Eigen::Matrix4f Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool>
 
 Eigen::Matrix4f Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
 {
+    PROFILE_FUNCTION();
     bool bFlag;
     return iterate(mRansacMaxIts,bFlag,vbInliers12,nInliers);
 }
 
 void Sim3Solver::ComputeCentroid(Eigen::Matrix3f &P, Eigen::Matrix3f &Pr, Eigen::Vector3f &C)
 {
+    PROFILE_FUNCTION();
     C = P.rowwise().sum();
     C = C / P.cols();
     for(int i=0; i<P.cols(); i++)
@@ -310,6 +319,7 @@ void Sim3Solver::ComputeCentroid(Eigen::Matrix3f &P, Eigen::Matrix3f &Pr, Eigen:
 
 void Sim3Solver::ComputeSim3(Eigen::Matrix3f &P1, Eigen::Matrix3f &P2)
 {
+    PROFILE_FUNCTION();
     // Custom implementation of:
     // Horn 1987, Closed-form solution of absolute orientataion using unit quaternions
 
@@ -414,6 +424,7 @@ void Sim3Solver::ComputeSim3(Eigen::Matrix3f &P1, Eigen::Matrix3f &P2)
 
 void Sim3Solver::CheckInliers()
 {
+    PROFILE_FUNCTION();
     vector<Eigen::Vector2f> vP1im2, vP2im1;
     Project(mvX3Dc2,vP2im1,mT12i,pCamera1);
     Project(mvX3Dc1,vP1im2,mT21i,pCamera2);
@@ -460,6 +471,7 @@ float Sim3Solver::GetEstimatedScale()
 
 void Sim3Solver::Project(const vector<Eigen::Vector3f> &vP3Dw, vector<Eigen::Vector2f> &vP2D, Eigen::Matrix4f Tcw, GeometricCamera* pCamera)
 {
+    PROFILE_FUNCTION();
     Eigen::Matrix3f Rcw = Tcw.block<3,3>(0,0);
     Eigen::Vector3f tcw = Tcw.block<3,1>(0,3);
 
@@ -476,6 +488,7 @@ void Sim3Solver::Project(const vector<Eigen::Vector3f> &vP3Dw, vector<Eigen::Vec
 
 void Sim3Solver::FromCameraToImage(const vector<Eigen::Vector3f> &vP3Dc, vector<Eigen::Vector2f> &vP2D, GeometricCamera* pCamera)
 {
+    PROFILE_FUNCTION();
     vP2D.clear();
     vP2D.reserve(vP3Dc.size());
 
