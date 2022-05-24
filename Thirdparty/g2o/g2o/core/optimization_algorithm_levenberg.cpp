@@ -36,6 +36,9 @@
 #include "sparse_optimizer.h"
 #include "solver.h"
 #include "batch_stats.h"
+#include "../../../../include/prof.h"
+#include "../../../../include/profTime.h"
+
 using namespace std;
 
 namespace g2o {
@@ -60,10 +63,13 @@ namespace g2o {
 
   OptimizationAlgorithm::SolverResult OptimizationAlgorithmLevenberg::solve(int iteration, bool online)
   {
+    PROFILE_FUNCTION();
+    //std::cout<< "OptimizationAlgorithmLevenberg" <<std::endl;
     assert(_optimizer && "_optimizer not set");
     assert(_solver->optimizer() == _optimizer && "underlying linear solver operates on different graph");
 
     if (iteration == 0 && !online) { // built up the CCS structure, here due to easy time measure
+
       bool ok = _solver->buildStructure();
       if (! ok) {
         cerr << __PRETTY_FUNCTION__ << ": Failure while building CCS structure" << endl;
@@ -72,25 +78,37 @@ namespace g2o {
     }
 
     double t=get_monotonic_time();
+
     _optimizer->computeActiveErrors();
+
     G2OBatchStatistics* globalStats = G2OBatchStatistics::globalStats();
     if (globalStats) {
       globalStats->timeResiduals = get_monotonic_time()-t;
       t=get_monotonic_time();
     }
 
-    double currentChi = _optimizer->activeRobustChi2();
+    double currentChi;
+#define RobustChi2  "activeRobustChi2"
+    {
+    profTime profTime(RobustChi2);
+    currentChi = _optimizer->activeRobustChi2();
+    }
     double tempChi=currentChi;
 
     double iniChi = currentChi;
 
-    _solver->buildSystem();
+#define BUILDSystem  "buildSystem"
+      {
+          profTime profTime(BUILDSystem);
+          _solver->buildSystem();
+      }
     if (globalStats) {
       globalStats->timeQuadraticForm = get_monotonic_time()-t;
     }
 
+
     // core part of the Levenbarg algorithm
-    if (iteration == 0) {       
+    if (iteration == 0) {
       _currentLambda = computeLambdaInit();
       _ni = 2;
       _nBad = 0;
@@ -100,6 +118,8 @@ namespace g2o {
     int& qmax = _levenbergIterations;
     qmax = 0;
     do {
+#define LBLOOP  "LBLOOP"
+       profTime profTime(LBLOOP);
       _optimizer->push();
       if (globalStats) {
         globalStats->levenbergIterations++;
@@ -112,7 +132,11 @@ namespace g2o {
         globalStats->timeLinearSolution+=get_monotonic_time()-t;
         t=get_monotonic_time();
       }
+
+
       _optimizer->update(_solver->x());
+
+
       if (globalStats) {
         globalStats->timeUpdate = get_monotonic_time()-t;
       }
@@ -168,8 +192,10 @@ namespace g2o {
     return OK;
   }
 
+
   double OptimizationAlgorithmLevenberg::computeLambdaInit() const
   {
+      PROFILE_FUNCTION();
     if (_userLambdaInit->value() > 0)
       return _userLambdaInit->value();
     double maxDiagonal=0.;
@@ -186,6 +212,7 @@ namespace g2o {
 
   double OptimizationAlgorithmLevenberg::computeScale() const
   {
+      PROFILE_FUNCTION();
     double scale = 0.;
     for (size_t j=0; j < _solver->vectorSize(); j++){
       scale += _solver->x()[j] * (_currentLambda * _solver->x()[j] + _solver->b()[j]);

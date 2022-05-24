@@ -42,6 +42,8 @@
 #include "../stuff/macros.h"
 #include "../stuff/misc.h"
 #include "../../config.h"
+#include "../../../../include/prof.h"
+#include "../../../../include/profTime.h"
 
 namespace g2o{
   using namespace std;
@@ -353,6 +355,8 @@ namespace g2o{
 
   int SparseOptimizer::optimize(int iterations, bool online)
   {
+
+    PROFILE_FUNCTION();
     if (_ivMap.size() == 0) {
       cerr << __PRETTY_FUNCTION__ << ": 0 vertices to optimize, maybe forgot to call initializeOptimization()" << endl;
       return -1;
